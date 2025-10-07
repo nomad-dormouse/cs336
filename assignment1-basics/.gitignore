@@ -164,3 +164,10 @@ cython_debug/
 
 # Data files and datasets
 data/
+
+# Scalene profiling output
+*.prof
+*.html
+profile.json
+scalene_*.html
+scalene_*.json
