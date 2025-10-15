@@ -1,6 +1,10 @@
 # 2.5 Experimenting with BPE Tokenizer Training
-# Problem (train_bpe): BPE Tokenizer Training (15 points)
 
+# Problem (train_bpe): BPE Tokenizer Training (15 points)
+# Problem (train_bpe_tinystories): BPE Training on TinyStories (2 points)
+# Problem (train_bpe_expts_owt): BPE Training on OpenWebText (2 points)
+
+from heapq import merge
 from tqdm import tqdm
 import os
 from typing import BinaryIO
@@ -62,6 +66,7 @@ def find_chunk_boundaries(
     return sorted(set(chunk_boundaries))
 
 
+
 def pre_tokenise_chunk(args) -> dict[str, int]:
     start, end, input_file, pattern_special_tokens, pattern_pre_tokens = args
     words = {}
@@ -75,16 +80,29 @@ def pre_tokenise_chunk(args) -> dict[str, int]:
     return words
 
 
+def serial_pre_tokenisation(
+    chunk_ranges: list[tuple[int, int]],
+    input_file: str,
+    pattern_special_tokens: str,
+    pattern_pre_tokens: str
+) -> dict[str, int]:
+    words = {}
+    for start, end in tqdm(chunk_ranges, desc="Serial pre-tokenisation"):
+        chunk_words = pre_tokenise_chunk((start, end, input_file, pattern_special_tokens, pattern_pre_tokens))
+        for token, count in chunk_words.items():
+            words[token] = words.get(token, 0) + count
+    return words
+    
+
 def parallel_pre_tokenisation(
-    chunk_ranges,
-    input_file,
-    num_processes,
-    pattern_special_tokens,
-    pattern_pre_tokens
+    chunk_ranges: list[tuple[int, int]],
+    input_file: str,
+    pattern_special_tokens: str,
+    pattern_pre_tokens: str
 ) -> dict[str, int]:
     chunk_args = [(start, end, input_file, pattern_special_tokens, pattern_pre_tokens) 
                   for start, end in chunk_ranges]
-    with multiprocessing.Pool(processes=num_processes) as pool:
+    with multiprocessing.Pool(processes=len(chunk_ranges)) as pool:
         words_in_chunks = list(tqdm(
             pool.imap_unordered(pre_tokenise_chunk, chunk_args), 
             total=len(chunk_args),
@@ -101,65 +119,130 @@ def parallel_pre_tokenisation(
 
 def pre_tokenise_file(
     input_file: str,
-    num_chunks: int,
     pattern_special_tokens: str,
-    pattern_pre_tokens: str
-) -> dict[tuple[bytes], int]:
+    pattern_pre_tokens: str,
+    split_special_token: bytes = b'<|endoftext|>',
+    num_chunks: int = 4
+) -> (list[tuple[bytes]], list[int]):
     """
-    Pre-tokenise each chunk in parallel and then merge results.
+    Pre-tokenise each chunk and merge results.
     """
-    with open(input_file, "rb") as f:
-        boundaries = find_chunk_boundaries(f, num_chunks, b"<|endoftext|>")
+    file_size = os.path.getsize(input_file)
+    print(f"Input file size: {file_size / (1024 ** 3):.2f} GB")
+
+    with open(input_file, 'rb') as f:
+        boundaries = find_chunk_boundaries(f, num_chunks, split_special_token)
     chunk_ranges = list(zip(boundaries[:-1], boundaries[1:]))
     
-    words_in_file = parallel_pre_tokenisation(
-        chunk_ranges,
-        input_file,
-        num_chunks,
-        pattern_special_tokens,
-        pattern_pre_tokens
-    )
+    if file_size < 1024 ** 3 * 4:
+        words_in_file = parallel_pre_tokenisation(
+            chunk_ranges,
+            input_file,
+            pattern_special_tokens,
+            pattern_pre_tokens,
+        )
+    else:
+        words_in_file = serial_pre_tokenisation(
+            chunk_ranges,
+            input_file,
+            pattern_special_tokens,
+            pattern_pre_tokens,
+        )
     
-    words_pre_tokens = {
-        tuple(bytes([b]) for b in word.encode("utf-8")): count
-        for word, count in words_in_file.items()
-    }
+    words = []
+    frequencies = []
+    for word, count in tqdm(words_in_file.items(), desc="Splitting words to bytes"):
+        tokenised_word = tuple(bytes([b]) for b in word.encode("utf-8"))
+        words.append(tokenised_word)
+        frequencies.append(count)
 
-    return words_pre_tokens
+    return words, frequencies
 
 
 def calculate_pair_freq(
-    words: dict[tuple[bytes], int]
-) -> tuple[dict[tuple[bytes], int], dict[tuple[bytes], int]]:
-    pairs_freq = {}
-    pairs_in_words = {}
-    for word, freq in words.items():
+    words: list[tuple[bytes]],
+    frequencies: list[int]
+) -> dict[tuple[bytes], dict[str, int | list[tuple[bytes]]]]:
+    pairs = {}
+    
+    for word_id, (word, freq) in enumerate(zip(words, frequencies)):
         seen_pairs = set()
         for i in range(len(word) - 1):
             pair = (word[i], word[i + 1])
-            pairs_freq[pair] = pairs_freq.get(pair, 0) + freq
+
+            if pair not in pairs:
+                pairs[pair] = {"freq": 0, "words": []}
+            
+            pairs[pair]["freq"] += freq
+            
             if pair not in seen_pairs:
+                pairs[pair]["words"].append(word_id)
                 seen_pairs.add(pair)
-                pairs_in_words.setdefault(pair, []).append(word)
-    return pairs_freq, pairs_in_words
+
+    return pairs
 
 
-def merge_pair_in_word(
-    word: tuple[bytes],
-    pair: tuple[bytes]
-) -> tuple[tuple[bytes], list[int]]:
-    merged_indices = []
-    updated_word = []
-    i = 0
-    while i < len(word):
-        if i < len(word) - 1 and (word[i], word[i + 1]) == pair:
-            merged_indices.append(i)
-            updated_word.append(word[i] + word[i + 1])
-            i += 2
-        else:
-            updated_word.append(word[i])
-            i += 1
-    return merged_indices, tuple(updated_word)
+def update_after_merge(
+    merged_pair: tuple[bytes],
+    tokenised_words: list[tuple[bytes]],
+    words_frequencies: list[int],
+    merge_candidates: dict[tuple[bytes], dict[str, int | list[tuple[bytes]]]],
+) -> (list[tuple[bytes]], list[int], dict[tuple[bytes], dict[str, int | list[tuple[bytes]]]]):
+    
+    words_to_update = merge_candidates.pop(merged_pair)["words"]
+
+    for word_id in words_to_update:
+        word = tokenised_words[word_id]
+        word_freq = words_frequencies[word_id]
+        
+        updated_word = []
+        i = 0
+        new_pairs = {}
+        
+        while i < len(word):
+            if i < len(word) - 1 and (word[i], word[i + 1]) == merged_pair:
+                merged_token = word[i] + word[i + 1]
+                updated_word.append(merged_token)
+                
+                if i >= 1:
+                    neighbouring_left_pair = (word[i-1], word[i])
+                    if neighbouring_left_pair in merge_candidates:
+                        merge_candidates[neighbouring_left_pair]["freq"] -= word_freq
+
+                    new_left_pair = (word[i-1], merged_token)
+                    if new_left_pair not in new_pairs:
+                        new_pairs[new_left_pair] = {"freq": 0, "words": []}    
+                    new_pairs[new_left_pair]["freq"] += word_freq
+                
+                if i < len(word) - 2:            
+                    neighbouring_right_pair = (word[i+1], word[i+2])
+                    if neighbouring_right_pair in merge_candidates:
+                        merge_candidates[neighbouring_right_pair]["freq"] -= word_freq
+
+                    new_right_pair = (merged_token, word[i+2])
+                    if new_right_pair not in new_pairs:
+                        new_pairs[new_right_pair] = {"freq": 0, "words": []}    
+                    new_pairs[new_right_pair]["freq"] += word_freq
+
+                i += 2
+            else:
+                updated_word.append(word[i])
+                i += 1
+        
+        updated_word_tuple = tuple(updated_word)
+
+        tokenised_words[word_id] = updated_word_tuple
+        
+        for pair, info in new_pairs.items():
+            if pair in merge_candidates:
+                merge_candidates[pair]["freq"] += info["freq"]
+                if updated_word_tuple not in merge_candidates[pair]["words"]:
+                    merge_candidates[pair]["words"].append(word_id)
+            else:
+                info["words"].append(word_id)
+                merge_candidates[pair] = info
+    
+    return tokenised_words, words_frequencies, merge_candidates
 
 
 def train_bpe(
@@ -170,30 +253,38 @@ def train_bpe(
 
     pattern_special_tokens = "|".join([re.escape(token) for token in special_tokens])
     pattern_pre_tokens = r"""'(?:[sdmt]|ll|ve|re)| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+"""
-    num_chunks = 4
     
     vocab = {i: token.encode("utf-8") for i, token in enumerate(special_tokens)}
     for i in range(256):
         vocab[len(special_tokens) + i] = bytes([i])
 
-    words = pre_tokenise_file(input_file, num_chunks, pattern_special_tokens, pattern_pre_tokens)
+    words, frequencies = pre_tokenise_file(
+        input_file,
+        pattern_special_tokens,
+        pattern_pre_tokens
+    )
+
     merges = []
     
+    pairs = calculate_pair_freq(words, frequencies)
     num_merges = vocab_size - len(vocab)
-    with tqdm(total=num_merges, desc="Training BPE") as pbar:
+
+    with tqdm(total=num_merges, desc="Training BPE", unit="merge", bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}, {percentage:.2f}%]") as pbar:
         while len(vocab) < vocab_size:
-            pairs_freq, pairs_in_words = calculate_pair_freq(words)
-            max_freq = max(pairs_freq.values())
-            top_pairs = [pair for pair, freq in pairs_freq.items() if freq == max_freq] 
+
+            max_freq = max(info["freq"] for info in pairs.values())
+            top_pairs = [pair for pair, info in pairs.items() if info["freq"] == max_freq] 
             lex_greater_pair = max(top_pairs)
+
             merges.append(lex_greater_pair)
             vocab[len(vocab)] = lex_greater_pair[0] + lex_greater_pair[1]
             
-            words_to_update = pairs_in_words[lex_greater_pair]
-            for word in words_to_update:
-                freq = words.pop(word)
-                _, updated_word = merge_pair_in_word(word, lex_greater_pair)
-                words[updated_word] = freq
+            words, frequencies, pairs = update_after_merge(
+                lex_greater_pair,
+                words,
+                frequencies,
+                pairs
+            )
             
             pbar.update(1)
 
@@ -225,15 +316,46 @@ def save_train_bpe_results(vocab, merges, vocab_filename='vocab.json', merges_fi
     print(f"Saved {len(merges)} merges to {merges_filename}")
 
 
+def find_longest_token(vocab: dict[int, bytes]):
+    longest_token = ''
+    max_length = 0
+    for _, token_bytes in vocab.items():
+        token_str = token_bytes.decode('utf-8', errors='replace')
+        if len(token_str) > max_length:
+            max_length = len(token_str)
+            longest_token = token_str
+    print(f"Longest token in vocabulary: '{longest_token}' ({max_length} characters)")
+
+
 if __name__ == "__main__":
-    file_name = "corpus"
-    vocab_size = 500
-    # file_name = "tinystories_sample_5M"
-    # vocab_size = 1000
-    file_extention = "en"
     
+    # file_dir = "tests/fixtures"
+    # file_name = "corpus"
+    # vocab_size = 500
+    # file_extention = "en"
+
+    # file_dir = "data"
+    # file_name = "TinyStoriesV2-GPT4-valid"
+    # file_extention = "txt"
+    # vocab_size = 10000
+
+    # file_dir = "data"
+    # file_name = "TinyStoriesV2-GPT4-train"
+    # file_extention = "txt"
+    # vocab_size = 10000
+
+    file_dir = "data"
+    file_name = "owt_valid"
+    file_extention = "txt"
+    vocab_size = 32000
+
+    # file_dir = "data"
+    # file_name = "owt_train"
+    # file_extention = "txt"
+    # vocab_size = 32000
+
     vocab, merges = train_bpe(
-        f"tests/fixtures/{file_name}.{file_extention}",
+        f"{file_dir}/{file_name}.{file_extention}",
         vocab_size,
         ["<|endoftext|>"]
     )
@@ -244,3 +366,5 @@ if __name__ == "__main__":
         vocab_filename=f"results/vocab_{file_name}_{vocab_size}.json",
         merges_filename=f"results/merges_{file_name}_{vocab_size}.txt",
     )
+
+    find_longest_token(vocab)

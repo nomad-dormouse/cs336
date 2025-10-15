@@ -951,6 +951,7 @@ H ello
 Ġco ld
 Ġ ri
 Ġh op
+d ed
 Ġc on
 Ġimp ort
 Ġh ill
@@ -1009,6 +1010,7 @@ fe re
 Ġdif fere
 Ġag reed
 Ġflo or
+ed e
 Ġsh out
 Ġhe re
 Ġst op
@@ -1133,6 +1135,7 @@ i ke
 Ġ O
 Ġro ll
 S ara
+g ing
 Ġc ream
 ĠBob o
 Ġre pl
@@ -1322,7 +1325,6 @@ ap e
 as ure
 o lly
 Ġevery where
-d e
 L ucy
 z e
 Ġbe e
@@ -1342,6 +1344,7 @@ c le
 Ġcast le
 Ġc re
 Ġwe ar
+in i
 le ss
 l c
 Ġp u
@@ -1353,13 +1356,14 @@ i et
 Ġn ap
 ĠB uddy
 Ġ ve
+ing in
+n in
 n er
 Ġqu iet
 Ġm ix
 Ġke y
 are nt
 Ġmake s
-an g
 Ġbr ought
 Ġr ound
 r ow
@@ -1398,9 +1402,11 @@ th y
 Ġw ish
 Ġle g
 Ġbe ach
+an g
 g g
 Ġs ister
 Ġri ver
+an a
 Ġmu s
 ce ss
 en ce
@@ -1430,7 +1436,6 @@ ard s
 i pp
 Ġv is
 Ġunderst and
-Ġsh in
 an ce
 ĠT o
 Ġbl ack
@@ -1439,6 +1444,7 @@ re n
 Ġbott le
 Ġmon key
 Ġfo x
+Ġsh in
 H is
 ed dy
 Ġmon ster
@@ -1473,9 +1479,9 @@ ve l
 Ġc ow
 Ġb oun
 itt ing
+e ad
 Ġsn ake
 Ġbr own
-e ad
 Ġw he
 Ġprom ised
 Ġf an
@@ -1521,7 +1527,6 @@ z z
 Ġma il
 Ġe ar
 ĠSara h
-or d
 Ġwor ds
 ĠE m
 . âĢĿ
@@ -1574,6 +1579,7 @@ bo ard
 Ġc e
 is es
 Ġl on
+or d
 Ġc andy
 Ġli ving
 ĠJ oe
@@ -1621,7 +1627,6 @@ Mom my
 i ch
 Ġst re
 Ġdoll s
-m e
 ĠB l
 Ġget ting
 Ġbl ank
@@ -1642,6 +1647,7 @@ as ed
 Ġc orn
 s et
 Ġtre asure
+Ġsa m
 Ġw ore
 Ġrun s
 Ġm oney
@@ -1651,7 +1657,7 @@ u b
 on s
 Ġp ile
 isk ers
-Ġsa me
+Ġsam e
 e o
 Ġsing ing
 a pp
@@ -1676,6 +1682,7 @@ ig h
 Ċ Ġ
 Ġteac her
 Ġe lephant
+e st
 Ġco at
 Ġse ar
 Ġp ill
@@ -1702,11 +1709,11 @@ aught y
 Ġse ed
 Ġc ard
 Ġprom ise
-Ġm in
 Ġbr ing
 il k
 ĠWh iskers
 Ġmo st
+Ġm in
 Ġar ri
 Ġte ach
 Ġsp in
@@ -1759,7 +1766,6 @@ um ber
 s y
 ir t
 Ġben ch
-i er
 Ġstre et
 ĠB ella
 b ow
@@ -1777,6 +1783,7 @@ s c
 et er
 b all
 a le
+i er
 Ġbelie ve
 Ġrock et
 Ġz oom
@@ -1817,7 +1824,6 @@ un g
 Ġf ew
 e ared
 Ġvill age
-ig g
 O K
 Ġbe ll
 le m
@@ -1846,9 +1852,10 @@ un a
 Ġwa ve
 Ġtow ards
 Ġs ug
+Ġru d
 Ġhug e
 Ġsp ark
-Ġru de
+Ġrud e
 Ġdri ver
 Ġh or
 Ġco ver
@@ -1895,6 +1902,7 @@ our n
 S ure
 Ġl ay
 Ġhug s
+Ġb an
 Ġ N
 Ġgra b
 Ġfight ing
@@ -1912,7 +1920,6 @@ r ing
 ad ow
 Ġnot e
 Ġjo ke
-Ġb an
 Ġno ises
 Ġjew el
 Ġcl oth
@@ -1931,6 +1938,7 @@ ount ain
 ul ar
 iz zy
 one st
+ig g
 Ġ On
 pp er
 Ġn et
@@ -1944,6 +1952,7 @@ a ur
 Ġbe ak
 ĠA nn
 n ot
+n an
 if e
 Ġj elly
 Ġdri ve
@@ -1951,7 +1960,6 @@ if e
 is a
 Ġpar t
 Ġche w
-Ġban an
 er y
 Ġsee k
 Ġcan not
@@ -1999,7 +2007,6 @@ ate ful
 Ġhelp ful
 Ġfan cy
 Ġadventure s
-e st
 Ġb ought
 Ġwas h
 Ġor gan
@@ -2132,6 +2139,7 @@ u ally
 ain ed
 ? âĢĿ
 Ġsp icy
+Ġd ig
 Ġche er
 Ġch ick
 Ġboun ce
@@ -2146,9 +2154,9 @@ ul t
 Ġp ool
 Ġf ake
 ĠCh irpy
-d en
 Ġjump ing
 ĠDad dy
+d en
 Ġsu pp
 Ġs uch
 Ġinterest ing
@@ -2299,13 +2307,13 @@ ic ked
 Ġd aughter
 Ġcar ried
 ĠM ama
+y m
 M y
 Ġwra p
 Ġtr ust
 Ġjourn ey
 Ġgl ass
 Ġa p
-y m
 St op
 Ġtr ue
 Ġru b
@@ -2340,9 +2348,8 @@ itt er
 c ed
 Ġwe ird
 Ġsa f
-Ġd ig
+Ġmo d
 Ġant s
-ug g
 ra id
 Ġthe se
 Ġmir ror
@@ -2358,6 +2365,7 @@ ra id
 ĠB r
 ra ss
 ar rass
+Ġro d
 Ġpo or
 Ġfright ened
 ĠT iny
@@ -2381,6 +2389,7 @@ n ess
 kn own
 Ġsuc cess
 Ġner vous
+ug g
 bb y
 Ġsplas hed
 Ġpuzz le
@@ -2530,7 +2539,7 @@ get able
 Ġmed ic
 Ġdisgust ing
 Ġchocol ate
-Ġbanan a
+Ġban ana
 Ġba ld
 ig hed
 ed ient
@@ -2626,6 +2635,7 @@ He re
 Ġpump kin
 Ġdisco ver
 Ġcle ar
+Ġch an
 Ġas king
 Ġspo iled
 Ġpri ze
@@ -2645,7 +2655,6 @@ at ch
 Ġcom b
 Ġb ulb
 um e
-m p
 id ent
 Ġv ase
 Ġtw ist
@@ -2655,12 +2664,12 @@ id ent
 Ġs que
 Ġh ay
 ĠP oppy
-ra g
 er ce
 Ġor iginal
 Ġfi erce
 Ġdr op
 Ġ ind
+Ġte m
 Ġsn ee
 Ġend ing
 Ġdraw ing
@@ -2689,9 +2698,8 @@ se lves
 ot o
 com fortable
 A re
-Ġte mp
+Ġtem p
 Ġsunf lower
-Ġrec ord
 Ġfr own
 Ġfind ing
 Ġbal ance
@@ -2736,6 +2744,7 @@ S orry
 Ġhair y
 Ġc ush
 Ġadventur ous
+ra g
 l ace
 W here
 Ġun l
@@ -2792,7 +2801,6 @@ l ight
 Ġplay ful
 ĠEm ily
 h ost
-an ged
 Ġwor d
 Ġt ied
 Ġp ir
@@ -2868,7 +2876,7 @@ n ic
 Ġm ap
 Ġlo g
 Ġexpl ained
-Ġch anged
+Ġchan ged
 Ġbrill iant
 Ġboy s
 g round
@@ -3043,6 +3051,7 @@ l ive
 Ġt ag
 Ġshell s
 Ġsh ade
+Ġrec ord
 Ġpour ed
 Ġno d
 Ġlo cked
@@ -3105,7 +3114,6 @@ et e
 ĠJ ake
 u nd
 ic t
-g ing
 G o
 Ġw ool
 Ġsuccess ful
@@ -3349,6 +3357,7 @@ at es
 Ġpo em
 Ġpir ate
 Ġn urse
+Ġha m
 Ġgigg led
 Ġdecor ate
 Ġd eter
@@ -3368,7 +3377,6 @@ J im
 Ġsh ape
 Ġrest less
 Ġquest ion
-Ġha m
 Ġear s
 Ġcri cket
 Ġanch or
@@ -3421,13 +3429,13 @@ o ld
 Ġbus hes
 ĠJim my
 ĠB oun
-d el
+an as
 ?" .
 Ġp le
-Ġmo del
+Ġmod el
 Ġcomp ut
 Ġcard board
-Ġbanan as
+Ġban anas
 sp it
 spit al
 keep er
@@ -3450,7 +3458,6 @@ he ad
 qu it
 quit o
 oph ie
-de st
 Ġsh ort
 Ġr id
 Ġo il
@@ -3492,7 +3499,7 @@ a ving
 Ġwip ed
 Ġt ummy
 Ġt ask
-Ġro de
+Ġrod e
 Ġquest ions
 Ġplay ground
 Ġpain ter
@@ -3554,8 +3561,8 @@ inocer os
 Ġkind ness
 Ġcry stal
 uc et
+u d
 Ġstep s
-Ġro d
 Ġpar ade
 Ġpa cked
 Ġo ak
@@ -3571,7 +3578,7 @@ umb led
 Ġth ose
 Ġref rigerator
 Ġnewsp aper
-Ġmo dest
+Ġmod est
 Ġli e
 Ġle ash
 Ġh our
@@ -3956,6 +3963,7 @@ c ase
 Ġadm ire
 Ġa head
 f ast
+ch an
 S h
 J oe
 Ġviol in
@@ -4004,7 +4012,6 @@ st iv
 stiv al
 re nder
 l id
-ch an
 Ġve st
 Ġtoile t
 Ġto oth
@@ -4197,7 +4204,6 @@ e b
 Ġdanc er
 Ġbe ep
 Ġab ove
-ĠR u
 is on
 Ġtr ade
 Ġsur render
@@ -4218,7 +4224,9 @@ is on
 ĠC o
 us ie
 ro d
+m em
 em ember
+em e
 col i
 c coli
 Ġv eterinarian
@@ -4240,7 +4248,6 @@ c coli
 g ie
 ec ause
 eb ra
-au d
 Ġwe apon
 Ġst air
 Ġrepe at
@@ -4255,7 +4262,6 @@ sc ope
 ro scope
 n esday
 lend ar
-l u
 ed nesday
 c er
 and a
@@ -4314,7 +4320,7 @@ e er
 Ġroom s
 Ġr ushed
 Ġlet ting
-Ġinc lu
+Ġinc l
 Ġimag ined
 Ġhappen s
 Ġde ar
@@ -4340,8 +4346,9 @@ ag gie
 Ġexcited ly
 Ġeat en
 Ġchick ens
-Ġappl aud
+Ġappl au
 ĠW iggly
+ĠR u
 ĠP apa
 ĠN ext
 ĠG igi
@@ -4377,7 +4384,6 @@ arl ie
 ĠSt e
 Ġ V
 ut or
-n a
 er o
 ec ted
 Y uck
@@ -4481,7 +4487,6 @@ he art
 ĠL illy
 s ity
 ott en
-an a
 A nn
 Ġtra cks
 Ġpar ts
@@ -4511,6 +4516,7 @@ B uddy
 Ġcla w
 Ġcar ed
 Ġbright er
+Ġbe g
 ĠM e
 v a
 pe edy
@@ -4529,6 +4535,7 @@ A ll
 ĠU n
 ĠB ow
 ugg age
+ud e
 l ook
 if orm
 ation s
@@ -4536,7 +4543,6 @@ ation s
 Ġexp er
 Ġdeep er
 Ġcand les
-Ġbe g
 ĠR o
 ĠH oppy
 ĠH ave
@@ -4566,6 +4572,7 @@ itten s
 ar nt
 S urpr
 Ġwhisp er
+Ġt ug
 Ġste el
 Ġs ir
 Ġrac ing
@@ -4669,7 +4676,6 @@ g es
 The se
 Al ice
 ĠâĢ ĵ
-Ġt ug
 Ġshop keeper
 Ġrain ing
 Ġput ting
@@ -4755,6 +4761,7 @@ er ation
 Ġhig hest
 Ġfold ed
 Ġfl apped
+Ġencou ra
 Ġe specially
 Ġbu zz
 Ġbeaut y
@@ -4786,7 +4793,6 @@ B ella
 ĠK iki
 ĠEvery thing
 un ately
-ra ged
 med i
 medi ately
 m en
@@ -4841,6 +4847,7 @@ Em ma
 Ġwe st
 Ġtra ve
 Ġslid ing
+Ġrec or
 Ġplan ned
 Ġor anges
 Ġop eration
@@ -4870,6 +4877,7 @@ d o
 Ġfield s
 Ġboun cy
 Ġatt ached
+Ġapplau d
 ĠRu by
 ĠG ood
 ĠFin ny
@@ -4998,7 +5006,6 @@ Bl ue
 Ġglo ves
 Ġem er
 Ġeas ier
-Ġb ang
 ĠW ally
 ĠSte ve
 ĠS unday
@@ -5009,7 +5016,6 @@ yth m
 ick y
 ic ing
 dd y
-d ing
 B ird
 Ġuniver se
 Ġstra ight
@@ -5019,7 +5025,7 @@ B ird
 Ġpotato es
 Ġis n
 Ġhit s
-Ġencou raged
+Ġencoura ged
 Ġcreature s
 Ġcollect ion
 Ġbre aking
@@ -5072,7 +5078,7 @@ L isa
 Ġland sc
 Ġkit es
 Ġkick ing
-Ġinclu de
+Ġincl ude
 Ġher s
 Ġfl at
 Ġfirework s
@@ -5085,7 +5091,6 @@ L isa
 ĠE ach
 ĠB aby
 or ted
-igg ing
 ic orn
 W ould
 Ġwe b
@@ -5124,7 +5129,7 @@ Mom o
 Ġgirl s
 Ġex it
 Ġdr inking
-Ġd igging
+Ġdig ging
 Ġchew ing
 Ġch allen
 Ġbed s
@@ -5140,6 +5145,7 @@ l er
 ish y
 is hing
 ell e
+a h
 Ġweep ing
 Ġwe ighed
 Ġve lvet
@@ -5158,6 +5164,7 @@ ell e
 Ġl ined
 Ġdisag ree
 Ġcartoon s
+Ġb ang
 Ġamaz ement
 ĠZ oe
 ĠThe se
@@ -5252,6 +5259,7 @@ S p
 ĠT ed
 ĠPe anut
 ĠO ut
+ĠJen n
 ĠH arry
 ss ible
 pl ash
@@ -5326,7 +5334,6 @@ udd les
 t ory
 is hes
 i ved
-d ed
 ac ob
 C at
 Ġstrugg le
@@ -5346,7 +5353,6 @@ C at
 ĠD id
 ĠC uddles
 x ture
-u d
 om as
 ct ly
 ch oo
@@ -5430,12 +5436,14 @@ M iss
 ĠSt op
 ĠSt itch
 ĠK atie
+ĠA n
 z ing
 vest ig
 m are
 l ier
 in o
 emb ers
+d ing
 bb ing
 Re ally
 E ventually
@@ -5488,7 +5496,7 @@ M mm
 Ġsh ock
 Ġro aring
 Ġref u
-Ġrecord ed
+Ġrecor ded
 Ġrece ived
 Ġpencil s
 Ġped als
@@ -5531,7 +5539,6 @@ i am
 el vet
 ara way
 all ow
-a h
 U n
 ĠâĢ ĺ
 Ġyou th
@@ -5627,6 +5634,7 @@ B oo
 Ġtick le
 Ġtal ent
 Ġstay ing
+Ġshr ug
 Ġseem s
 Ġsecret s
 Ġse agull
@@ -5654,7 +5662,6 @@ B oo
 ĠJ acob
 ĠCh icky
 ĠB oo
-ĠA n
 Ġ Once
 Ġ 1
 ust y
@@ -5666,7 +5673,6 @@ if i
 h a
 es ome
 c us
-ang ing
 R ob
 R o
 R ex
@@ -5733,7 +5739,6 @@ J o
 Ġspray ing
 Ġspace ship
 Ġsne aky
-Ġshr ug
 Ġrest ored
 Ġprett iest
 Ġpatient ly
@@ -5812,7 +5817,6 @@ ul p
 uff in
 uct ions
 sc in
-n ie
 ay s
 Wh iskers
 R emember
@@ -5820,6 +5824,7 @@ P ete
 P aul
 Mr s
 D uring
+A n
 .. ."
 Ġtr aded
 Ġthu d
@@ -5920,7 +5925,7 @@ A choo
 Ġbak er
 Ġback ward
 Ġb oo
-Ġapplaud ed
+Ġapplau ded
 Ġapolog ize
 ĠM uffin
 ĠLe ave
@@ -5929,14 +5934,15 @@ A choo
 ĠBe hind
 st ep
 r ance
-or ds
 j o
 id ers
 er n
+e al
 big ail
 bb led
 b l
 ar ter
+an n
 a ctly
 a a
 T weet
@@ -5970,7 +5976,7 @@ S omet
 Ġdrag ged
 Ġd ipped
 Ġcra cked
-Ġch anging
+Ġchan ging
 Ġc ause
 Ġbare ly
 ĠY esterday
@@ -5980,7 +5986,7 @@ S omet
 ĠM oo
 ĠL ove
 ĠJess ica
-ĠJen na
+ĠJenn a
 ĠHo pper
 ĠG reen
 ĠG r
@@ -5990,17 +5996,13 @@ S omet
 ĠBe ep
 ĠA m
 Ġ Q
-n ies
 jam as
 h o
-an na
 T eddy
-St e
 S illy
 M illie
 J erry
 Gra ndpa
-A n
 Ġwarn ings
 Ġv ent
 Ġun ited
@@ -6046,10 +6048,12 @@ A n
 ue en
 u ly
 r ink
+n ies
 ir m
 id ing
 gu ing
 f ied
+e ff
 e ah
 b ly
 Un fortunately
@@ -6107,6 +6111,7 @@ A h
 ĠBug gy
 ĠB y
 ĠB ecause
+rr r
 re y
 d am
 cu se
@@ -6199,9 +6204,10 @@ ut ure
 th ough
 step s
 se ek
+or ds
 ink le
 in ing
-e ff
+c l
 an es
 ak er
 Y eah
@@ -6269,12 +6275,14 @@ ur ried
 un e
 t uce
 ong e
+on n
 n k
 low ers
 l ay
 igg ie
 id o
 ed s
+e ve
 c akes
 bl ings
 b ie
@@ -6421,13 +6429,11 @@ B ig
 ĠC ow
 Ġ ĊĠ
 ust ed
-or der
+u ded
 iv i
 f ly
 f ather
-e al
 ct ions
-c l
 Y ummy
 Sp ike
 S ome
@@ -6532,7 +6538,7 @@ amp oline
 al ph
 Z oom
 T ake
-Ste ve
+St eve
 S n
 Ro ar
 O ut
@@ -6569,7 +6575,7 @@ Ann ie
 Ġresp ons
 Ġremember ing
 Ġrelie f
-Ġrec order
+Ġrecor der
 Ġr ising
 Ġpray er
 Ġpig gy
@@ -6585,7 +6591,7 @@ Ann ie
 Ġlick ing
 Ġle ast
 Ġknow ledge
-Ġinclu ded
+Ġincl uded
 Ġhid er
 Ġhe av
 Ġflav or
@@ -6624,10 +6630,8 @@ Ann ie
 urt les
 uri ous
 th s
-rr r
 rom ise
 o ssible
-n o
 is ions
 in ny
 ich a
@@ -6675,6 +6679,7 @@ D anny
 Ġjoin ing
 Ġintroduc ed
 Ġinstr um
+Ġincl ud
 Ġimp ossible
 Ġhuman s
 Ġhesit ated
@@ -6725,6 +6730,7 @@ s hing
 o ke
 o dy
 nd y
+n o
 n eath
 ll e
 h i
@@ -6815,7 +6821,7 @@ A lex
 ĠM ild
 ĠM am
 ĠL iam
-ĠJen nie
+ĠJenn ie
 ĠJack y
 ĠJ u
 ĠF aye
@@ -6937,6 +6943,7 @@ ce pt
 c c
 bb ie
 ara c
+ann a
 an s
 an ed
 ad die
@@ -6994,7 +7001,7 @@ B ow
 Ġlead s
 Ġknock ing
 Ġjoin s
-Ġinclu ding
+Ġinclud ing
 Ġimag ining
 Ġignor ing
 Ġha lves
@@ -7048,7 +7055,6 @@ un o
 ump h
 ugg les
 u ing
-u de
 pec ting
 p it
 os ite
@@ -7219,7 +7225,6 @@ b ut
 as hes
 am b
 all owed
-al ing
 ab ly
 Th omas
 T oby
@@ -7308,7 +7313,6 @@ A bby
 Ġfig ured
 Ġfamil iar
 Ġexplore r
-Ġencou rag
 Ġeffort s
 Ġe cho
 Ġe ase
@@ -7552,7 +7556,7 @@ be ep
 b a
 ater pillar
 arm en
-anna h
+ann ah
 an et
 an ced
 ag ic
@@ -7569,6 +7573,7 @@ Fred dy
 B y
 B rian
 B ounce
+== =
 Ġworry ing
 Ġwob ble
 Ġwis ely
@@ -7640,7 +7645,7 @@ B ounce
 Ġfill s
 Ġexerc ises
 Ġencourage ment
-Ġencourag ing
+Ġencoura ging
 Ġenc ount
 Ġed ges
 Ġdoor way
@@ -7722,7 +7727,6 @@ B ounce
 ĠA ngela
 Ġ ill
 year s
-y l
 wh ile
 us hing
 urp le
@@ -7737,9 +7741,9 @@ ret ty
 ra b
 oun ced
 oph ia
+onn a
 ong r
 on se
-on na
 om p
 nt il
 mb ers
@@ -7775,6 +7779,7 @@ ap ers
 ap aya
 ant ha
 an while
+al ing
 ac ing
 a is
 a ct
@@ -7799,7 +7804,7 @@ Bird y
 Be hind
 B op
 Al bert
-== ==
+= ==
 , '
 Ġwrink led
 Ġwr iter
@@ -7962,6 +7967,7 @@ Al bert
 ĠA rm
 ĠA nt
 âĢ ¦
+y l
 yl v
 ylv ia
 w ater
@@ -7972,6 +7978,7 @@ u ses
 so l
 s n
 ra ve
+ra ged
 r inky
 qu et
 p arent
@@ -7998,6 +8005,7 @@ es ses
 er ts
 el ope
 el ie
+e ven
 d ate
 cream s
 cl oud
@@ -8227,7 +8235,6 @@ y an
 we ed
 ull aby
 ul a
-ugg ing
 u ise
 st ick
 ss a
@@ -8236,6 +8243,7 @@ s ers
 ry a
 riend ship
 p op
+p er
 ot s
 ot ato
 ort unately
@@ -8248,12 +8256,14 @@ oin t
 oe ver
 oc co
 o ff
+o d
 m ing
 m ate
 l or
 it a
 ir cle
 ip es
+ini er
 in ted
 ild ren
 ig e
@@ -8270,6 +8280,7 @@ ere sa
 em ies
 el ina
 ear l
+d est
 c ri
 bb ers
 b ell
@@ -8361,7 +8372,7 @@ A bigail
 Ġsitu ations
 Ġsiren s
 Ġshr ank
-Ġshin ier
+Ġsh inier
 Ġsecond s
 Ġsea weed
 Ġscra ped
@@ -8437,7 +8448,6 @@ A bigail
 Ġfa iled
 Ġf ulf
 Ġexplain s
-Ġexpl o
 Ġexper ienced
 Ġex pecting
 Ġen emies
@@ -8513,9 +8523,9 @@ A bigail
 ĠSk ip
 ĠS ummer
 ĠS ince
-ĠRu de
 ĠRo ll
 ĠR yan
+ĠR ude
 ĠR ita
 ĠR icky
 ĠR h
@@ -8598,15 +8608,14 @@ qu ar
 quar ium
 pe ed
 p rints
-p er
+p le
 ou raged
 ore nce
 op y
 ook s
-on nie
+onn ie
 o kay
 nd les
-n or
 n e
 m el
 mel on
@@ -8618,7 +8627,8 @@ in cy
 imal s
 igg led
 ig ger
-ien na
+ien n
+ienn a
 ie ves
 ic ola
 ic ious
@@ -8632,8 +8642,8 @@ elly fish
 elie ve
 el ix
 ead ing
-e ven
 e se
+e ow
 d oo
 d og
 d mother
@@ -8814,7 +8824,6 @@ A ny
 Ġf et
 Ġexperience s
 Ġexam ining
-Ġex ch
 Ġer asers
 Ġenter ing
 Ġenjoy able
@@ -8971,6 +8980,7 @@ se y
 ret t
 re nt
 rance s
+r rr
 que e
 quee ze
 pe ck
@@ -8987,9 +8997,9 @@ o ving
 o f
 o ard
 n if
-me ow
 m oo
 m iest
+m eow
 les cope
 lect ric
 l ong
@@ -9258,6 +9268,7 @@ A rrr
 Ġf erry
 Ġf antastic
 Ġf ade
+Ġexpl od
 Ġexper iment
 Ġexp ert
 Ġexam s
@@ -9318,7 +9329,7 @@ A rrr
 Ġbeautif ully
 Ġbeak s
 Ġbe ating
-Ġbang ing
+Ġban ging
 Ġb amboo
 Ġast on
 Ġal bum
@@ -9431,7 +9442,6 @@ A rrr
 ĠChe ese
 ĠCh antelle
 ĠC urious
-ĠC on
 ĠC omp
 ĠC ate
 ĠBl ake
@@ -9486,6 +9496,7 @@ ord inary
 op en
 op ed
 oop er
+onn or
 ond e
 on fused
 o ot
@@ -9493,6 +9504,7 @@ o ison
 nam on
 n ip
 n ings
+n ie
 mar ine
 m as
 low ing
@@ -9507,7 +9519,8 @@ l ot
 l ike
 l ied
 l aw
-l aud
+l au
+lau d
 k s
 k er
 j est
@@ -9532,6 +9545,7 @@ i ens
 h oo
 h ne
 g r
+g n
 f reeze
 f ree
 f lowing
@@ -9545,7 +9559,6 @@ e il
 e ce
 e at
 e an
-d es
 d aughter
 cut ter
 col ored
@@ -9572,6 +9585,7 @@ ap tain
 ap hne
 anger ous
 ance lot
+an ging
 an ation
 amp le
 am bled
@@ -9660,6 +9674,7 @@ A T
 Ġun z
 Ġun less
 Ġumbre llas
+Ġtug ging
 Ġtrust s
 Ġtrumpet s
 Ġtre et
@@ -9674,7 +9689,6 @@ A T
 Ġtantr um
 Ġtank s
 Ġtable t
-Ġt ugging
 Ġt ar
 Ġsy ringe
 Ġsway ed
@@ -9727,17 +9741,3 @@ A T
 Ġscare s
 Ġsc owl
 Ġsc ientist
-Ġsc ience
-Ġsatis faction
-Ġsa ves
-Ġs uspicious
-Ġs ly
-Ġs inking
-Ġro les
-Ġro amed
-Ġribb it
-Ġres pecting
-Ġrele asing
-Ġref using
-Ġrain coat
-Ġrac ers
