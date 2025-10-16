@@ -344,15 +344,15 @@ if __name__ == "__main__":
     # file_extention = "txt"
     # vocab_size = 10000
 
-    file_dir = "data"
-    file_name = "owt_valid"
-    file_extention = "txt"
-    vocab_size = 32000
-
     # file_dir = "data"
-    # file_name = "owt_train"
+    # file_name = "owt_valid"
     # file_extention = "txt"
     # vocab_size = 32000
+
+    file_dir = "data"
+    file_name = "owt_train"
+    file_extention = "txt"
+    vocab_size = 32000
 
     vocab, merges = train_bpe(
         f"{file_dir}/{file_name}.{file_extention}",
