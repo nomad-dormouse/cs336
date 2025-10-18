@@ -4,15 +4,19 @@
 # Problem (train_bpe_tinystories): BPE Training on TinyStories (2 points)
 # Problem (train_bpe_expts_owt): BPE Training on OpenWebText (2 points)
 
-from heapq import merge
-from tqdm import tqdm
+from dotenv import load_dotenv
 import os
+import sys
 from typing import BinaryIO
+from tqdm import tqdm
 import regex as re
 import multiprocessing
 import json
-import sys
-import os
+
+
+# Load environment variables
+load_dotenv()
+
 
 # Add the tests directory to the path to import gpt2_bytes_to_unicode
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'tests'))
@@ -252,7 +256,7 @@ def train_bpe(
 ) -> (dict[int, bytes], list[tuple[bytes, bytes]]):
 
     pattern_special_tokens = "|".join([re.escape(token) for token in special_tokens])
-    pattern_pre_tokens = r"""'(?:[sdmt]|ll|ve|re)| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+"""
+    pattern_pre_tokens = os.getenv('REGEX_PRE_TOKENS')
     
     vocab = {i: token.encode("utf-8") for i, token in enumerate(special_tokens)}
     for i in range(256):
@@ -329,10 +333,10 @@ def find_longest_token(vocab: dict[int, bytes]):
 
 if __name__ == "__main__":
     
-    # file_dir = "tests/fixtures"
-    # file_name = "corpus"
-    # vocab_size = 500
-    # file_extention = "en"
+    file_dir = "tests/fixtures"
+    file_name = "corpus"
+    vocab_size = 500
+    file_extention = "en"
 
     # file_dir = "data"
     # file_name = "TinyStoriesV2-GPT4-valid"
@@ -349,15 +353,15 @@ if __name__ == "__main__":
     # file_extention = "txt"
     # vocab_size = 32000
 
-    file_dir = "data"
-    file_name = "owt_train"
-    file_extention = "txt"
-    vocab_size = 32000
+    # file_dir = "data"
+    # file_name = "owt_train"
+    # file_extention = "txt"
+    # vocab_size = 32000
 
     vocab, merges = train_bpe(
         f"{file_dir}/{file_name}.{file_extention}",
         vocab_size,
-        ["<|endoftext|>"]
+        [os.getenv('ENDOFTEXT_TOKEN')]
     )
 
     save_train_bpe_results(
