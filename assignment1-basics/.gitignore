@@ -171,3 +171,6 @@ data/
 profile.json
 scalene_*.html
 scalene_*.json
+
+# Tokenised files
+results/tokenised/

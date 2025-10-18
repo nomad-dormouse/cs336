@@ -70,7 +70,6 @@ def find_chunk_boundaries(
     return sorted(set(chunk_boundaries))
 
 
-
 def pre_tokenise_chunk(args) -> dict[str, int]:
     start, end, input_file, pattern_special_tokens, pattern_pre_tokens = args
     words = {}

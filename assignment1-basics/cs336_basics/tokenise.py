@@ -13,6 +13,13 @@ import json
 import random
 import time
 import numpy as np
+import multiprocessing
+from tqdm import tqdm
+
+try:
+    from train_bpe import find_chunk_boundaries
+except ImportError:
+    from .train_bpe import find_chunk_boundaries
 
 # Load environment variables
 load_dotenv()
@@ -38,7 +45,7 @@ class Tokenizer:
             self.special_tokens = []
         else:
             self.special_tokens = special_tokens
-
+            
 
     @classmethod
     def from_files(
@@ -81,9 +88,9 @@ class Tokenizer:
         
         # Initialise a tokeniser
         tokenizer = cls(vocab, merges, special_tokens)
-        print("Tokeniser is initialised from:")
-        print(f"- vocabulary file {vocab_filepath}")
-        print(f"- merges file {merges_filepath}")
+        print("Tokeniser:")
+        print(f"- {vocab_filepath}")
+        print(f"- {merges_filepath}")
         
         return tokenizer
 
@@ -113,6 +120,28 @@ class Tokenizer:
             tokens = new_tokens
         
         return tokens
+
+
+    def encode_word(
+        self,
+        word: str
+    ) -> list[int]:
+        tokens = [bytes([b]) for b in word.encode("utf-8")]
+        merged_tokens = self.apply_bpe(tokens)
+
+        # Convert tokens to token IDs
+        token_ids = []
+        for token in merged_tokens:
+            if token in self.token_to_id:
+                token_ids.append(self.token_to_id[token])
+            else:
+                # Fallback: if token not found, split into individual bytes
+                for byte_val in token:
+                    byte_token = bytes([byte_val])
+                    if byte_token in self.token_to_id:
+                        token_ids.append(self.token_to_id[byte_token])
+
+        return token_ids
 
 
     def encode(
@@ -151,19 +180,8 @@ class Tokenizer:
                 
                 # For each word, apply BPE merges and then convert to tokens
                 for word in words:
-                    tokens = [bytes([b]) for b in word.encode("utf-8")]
-                    merged_tokens = self.apply_bpe(tokens)
-
-                    # Convert tokens to token IDs
-                    for token in merged_tokens:
-                        if token in self.token_to_id:
-                            token_ids.append(self.token_to_id[token])
-                        else:
-                            # Fallback: if token not found, split into individual bytes
-                            for byte_val in token:
-                                byte_token = bytes([byte_val])
-                                if byte_token in self.token_to_id:
-                                    token_ids.append(self.token_to_id[byte_token])
+                    word_token_ids = self.encode_word(word)
+                    token_ids.extend(word_token_ids)
         
         return token_ids
 
@@ -213,8 +231,8 @@ def test_tokeniser(
     print(f"Original: {text}")
     print(f"Decoded:  {decoded}")
     print(f"Match: {text == decoded}")
-
-
+    
+    
 def sample_docs(
     input_filepath: str,
     samples_count
@@ -309,16 +327,107 @@ def throughput(
     file_seconds = file_bytes / throughput
     file_minutes = file_seconds / 60
     
-    print(f"Throughput: {throughput:,.0f} bytes/second ({len(docs)} samples, {total_bytes:,} bytes)")
-    print(f"Time to tokenise Pile dataset (825GB): {pile_days:,.1f} days")
-    print(f"Time to tokenise {input_filepath} ({file_gigabytes:.2f}GB): {file_minutes:.1f} minutes")
+    print("Throughput:")
+    print(f"- {throughput:,.0f} bytes/second")
+    print(f"- tested on {len(docs)} samples of {total_bytes:,} bytes total")
+    print("Time to tokenise:")
+    print(f"- Pile dataset (825 GB): {pile_days:,.1f} days")
+    print(f"- input file {input_filepath} ({file_gigabytes:.2f} GB): {file_minutes:.1f} minutes")
+
+
+def tokenise_chunk(args) -> np.ndarray:
+    tokenizer, input_filepath, start, end, chunk_id = args
+    token_ids = []
+    
+    with open(input_filepath, "r", encoding="utf-8") as f:
+        f.seek(start)
+        chunk_data = f.read(end - start)
+        
+        lines = chunk_data.splitlines()
+        for line in tqdm(lines, desc=f"Chunk {chunk_id}", unit="line", position=chunk_id, leave=False):
+            line = line.strip()
+            if line:  # Skip empty lines
+                chunk_token_ids = tokenizer.encode(line)
+                token_ids.extend(chunk_token_ids)
+    
+    # Convert to NumPy array with uint16 dtype
+    token_array = np.array(token_ids, dtype=np.uint16)
+    
+    return token_array
+
+
+def tokenise_chunks_parallel(
+    tokenizer: "Tokenizer",
+    input_filepath: str,
+    num_chunks: int = 4
+) -> np.ndarray:
+    # Find chunk boundaries
+    endoftext_token = os.getenv("ENDOFTEXT_TOKEN").encode("utf-8")
+    with open(input_filepath, "rb") as f:
+        boundaries = find_chunk_boundaries(f, num_chunks, endoftext_token)
+    chunk_ranges = list(zip(boundaries[:-1], boundaries[1:]))
+    
+    # Process chunks in parallel
+    chunk_args = [(tokenizer, input_filepath, start, end, i) 
+                  for i, (start, end) in enumerate(chunk_ranges)]
+    with multiprocessing.Pool(processes=len(chunk_ranges)) as pool:
+        chunk_token_ids = pool.map(tokenise_chunk, chunk_args)
+    
+    # Combine all token IDs from all chunks
+    file_token_ids = np.concatenate(chunk_token_ids)
+    
+    return file_token_ids
+
+
+def tokenise_chunks_serial(
+    tokenizer: "Tokenizer",
+    input_filepath: str,
+    num_serial_chunks: int = 12,
+    num_parallel_chunks: int = 4
+) -> np.ndarray:
+    # Find sequential chunks boundaries
+    endoftext_token = os.getenv("ENDOFTEXT_TOKEN").encode("utf-8")
+    with open(input_filepath, "rb") as f:
+        boundaries = find_chunk_boundaries(f, num_serial_chunks, endoftext_token)
+    serial_chunk_ranges = list(zip(boundaries[:-1], boundaries[1:]))
+    
+    all_token_ids = []
+    
+    # Process each sequential chunk
+    for i, (start, end) in enumerate(serial_chunk_ranges):
+        print(f"Processing serial chunk {i+1}/{len(serial_chunk_ranges)}")
+        
+        # Extract chunk data to temporary file
+        import tempfile
+        temp_filepath = os.path.join(tempfile.gettempdir(), f"temp_chunk_{i}.txt")
+        with open(input_filepath, "rb") as source_f:
+            source_f.seek(start)
+            chunk_data = source_f.read(end - start)
+        with open(temp_filepath, "wb") as temp_f:
+            temp_f.write(chunk_data)
+        
+        # Process temporary file in parallel
+        chunk_token_ids = tokenise_chunks_parallel(
+            tokenizer, 
+            temp_filepath, 
+            num_chunks=num_parallel_chunks
+        )
+        all_token_ids.append(chunk_token_ids)
+            
+        os.remove(temp_filepath)
+    
+    # Combine all token IDs from all serial chunks
+    file_token_ids = np.concatenate(all_token_ids)
+    
+    return file_token_ids
 
 
 def tokenise_file(
     vocab_filepath: str,
     merges_filepath: str,
     special_tokens: list[str],
-    input_filepath: str
+    input_filepath: str,
+    file_size_limit_gb: int = 4
 ):
     tokenizer = Tokenizer.from_files(
         vocab_filepath,
@@ -326,25 +435,29 @@ def tokenise_file(
         special_tokens
     )
 
-    all_token_ids = []
-    with open(input_filepath, "r", encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if line:  # Skip empty lines
-                token_ids = tokenizer.encode(line)
-                all_token_ids.extend(token_ids)
-    
-    # Convert to NumPy array with uint16 dtype
-    token_array = np.array(all_token_ids, dtype=np.uint16)
+    # Check file size and choose processing method
+    file_size_gb = os.path.getsize(input_filepath) / (1024**3)
+    print("Input file:")
+    print(f"- {input_filepath}")
+    print(f"- {file_size_gb:.2f} GB")
+    print("- split file into 4 chunks")
+    if file_size_gb < file_size_limit_gb:
+        print("- process chunks in parallel on 4 CPU cores")
+        token_array = tokenise_chunks_parallel(tokenizer, input_filepath)
+    else:
+        print("- process chunks sequentially")
+        print("- split each chunk into 4 sub-chunks to process in parallel on 4 CPU cores")
+        token_array = tokenise_chunks_serial(tokenizer, input_filepath)
     
     # Save to file
     input_filename = os.path.basename(input_filepath)
     input_name, _ = os.path.splitext(input_filename)
     output_filename = input_name + "_tokenised" + ".npy"
-    output_filepath = os.path.join("results", output_filename)
+    output_filepath = os.path.join("results", "tokenised", output_filename)
     np.save(output_filepath, token_array)
     
-    print(f"Tokenised file {input_filepath} saved to {output_filepath}")
+    print(f"Tokenised file:")
+    print(f"- {output_filepath}")
 
 
 if __name__ == "__main__":
@@ -357,32 +470,32 @@ if __name__ == "__main__":
     # tokenizer = Tokenizer(vocab, merges, special_tokens)
     # text = "hello <|endoftext|><|endoftext|> world"
 
-    # print("\nCorpus with Corpus tokeniser")
+    # # Corpus with Corpus tokeniser
     # vocab_filepath = "results/vocab_corpus_500.json"
     # merges_filepath = "results/merges_corpus_500.txt"
     # input_filepath = "tests/fixtures/corpus.en"
 
-    # print("\nTS valid with TS tokeniser")
+    # # TS valid with TS tokeniser
     # vocab_filepath = "results/vocab_TinyStoriesV2-GPT4-valid_10000.json"
     # merges_filepath = "results/merges_TinyStoriesV2-GPT4-valid_10000.txt"
     # input_filepath = "data/TinyStoriesV2-GPT4-valid.txt"
     
-    # print("\nTS train with TS tokeniser")
+    # # TS train with TS tokeniser
     # vocab_filepath = "results/vocab_TinyStoriesV2-GPT4-train_10000.json"
     # merges_filepath = "results/merges_TinyStoriesV2-GPT4-train_10000.txt"
     # input_filepath = "data/TinyStoriesV2-GPT4-train.txt"
 
-    print("\nOWT valid with OWT tokeniser")
-    vocab_filepath = "results/vocab_owt_valid_32000.json"
-    merges_filepath = "results/merges_owt_valid_32000.txt"
-    input_filepath = "data/owt_valid.txt"
+    # # OWT valid with OWT tokeniser
+    # vocab_filepath = "results/vocab_owt_valid_32000.json"
+    # merges_filepath = "results/merges_owt_valid_32000.txt"
+    # input_filepath = "data/owt_valid.txt"
 
-    # print("\nOWT train with OWT tokeniser")
-    # vocab_filepath = "results/vocab_owt_train_32000.json"
-    # merges_filepath = "results/merges_owt_train_32000.txt"
-    # input_filepath = "data/owt_train.txt"
+    # OWT train with OWT tokeniser
+    vocab_filepath = "results/vocab_owt_train_32000.json"
+    merges_filepath = "results/merges_owt_train_32000.txt"
+    input_filepath = "data/owt_train.txt"
 
-    # print("\nOWT train with TS tokeniser")
+    # OWT train with TS tokeniser
     # vocab_filepath = "results/vocab_TinyStoriesV2-GPT4-train_10000.json"
     # merges_filepath = "results/merges_TinyStoriesV2-GPT4-train_10000.txt"
     # input_filepath = "data/owt_train.txt"
@@ -403,18 +516,18 @@ if __name__ == "__main__":
     # )
     # print("\n")
 
-    throughput(
+    # throughput(
+    #     vocab_filepath,
+    #     merges_filepath,
+    #     special_tokens,
+    #     input_filepath,
+    #     samples_count
+    # )
+    # print("\n")
+
+    tokenise_file(
         vocab_filepath,
         merges_filepath,
         special_tokens,
         input_filepath,
-        samples_count
     )
-    print("\n")
-
-    # tokenise_file(
-    #     vocab_filepath,
-    #     merges_filepath,
-    #     special_tokens,
-    #     input_filepath
-    # )
