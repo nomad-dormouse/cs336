@@ -21,12 +21,9 @@ try:
 except ImportError:
     from .train_bpe import find_chunk_boundaries
 
+
 # Load environment variables
 load_dotenv()
-
-# Add the tests directory to the path to import gpt2_bytes_to_unicode
-sys.path.append(os.path.join(os.path.dirname(__file__), "..", "tests"))
-from common import gpt2_bytes_to_unicode
 
 
 class Tokenizer:
@@ -55,15 +52,12 @@ class Tokenizer:
         special_tokens: list[str] | None = None
     ) -> "Tokenizer":
 
-        # Load vocabulary from JSON file
+        # Load vocabulary from JSON file and convert string vocab to bytes
         with open(vocab_filepath, "r", encoding="utf-8") as f:
-            gpt2_vocab = json.load(f)
-        
-        # Convert GPT-2 style vocab to bytes
-        gpt2_byte_decoder = {v: k for k, v in gpt2_bytes_to_unicode().items()}
+            vocab_dict = json.load(f)
         vocab = {
-            gpt2_vocab_index: bytes([gpt2_byte_decoder[token] for token in gpt2_vocab_item])
-            for gpt2_vocab_item, gpt2_vocab_index in gpt2_vocab.items()
+            token_id: token_str.encode("utf-8")
+            for token_str, token_id in vocab_dict.items()
         }
         
         # Load merges from TXT file
@@ -74,8 +68,8 @@ class Tokenizer:
                 if cleaned_line and len(cleaned_line.split(" ")) == 2:
                     token1_str, token2_str = cleaned_line.split(" ")
                     merge = (
-                        bytes([gpt2_byte_decoder[token] for token in token1_str]),
-                        bytes([gpt2_byte_decoder[token] for token in token2_str])
+                        token1_str.encode("utf-8"),
+                        token2_str.encode("utf-8")
                     )
                     merges.append(merge)
         
@@ -480,20 +474,20 @@ if __name__ == "__main__":
     # merges_filepath = "results/merges_TinyStoriesV2-GPT4-valid_10000.txt"
     # input_filepath = "data/TinyStoriesV2-GPT4-valid.txt"
     
-    # # TS train with TS tokeniser
-    # vocab_filepath = "results/vocab_TinyStoriesV2-GPT4-train_10000.json"
-    # merges_filepath = "results/merges_TinyStoriesV2-GPT4-train_10000.txt"
-    # input_filepath = "data/TinyStoriesV2-GPT4-train.txt"
+    # TS train with TS tokeniser
+    vocab_filepath = "results/vocab_TinyStoriesV2-GPT4-train_10000.json"
+    merges_filepath = "results/merges_TinyStoriesV2-GPT4-train_10000.txt"
+    input_filepath = "data/TinyStoriesV2-GPT4-train.txt"
 
     # # OWT valid with OWT tokeniser
     # vocab_filepath = "results/vocab_owt_valid_32000.json"
     # merges_filepath = "results/merges_owt_valid_32000.txt"
     # input_filepath = "data/owt_valid.txt"
 
-    # OWT train with OWT tokeniser
-    vocab_filepath = "results/vocab_owt_train_32000.json"
-    merges_filepath = "results/merges_owt_train_32000.txt"
-    input_filepath = "data/owt_train.txt"
+    # # OWT train with OWT tokeniser
+    # vocab_filepath = "results/vocab_owt_train_32000.json"
+    # merges_filepath = "results/merges_owt_train_32000.txt"
+    # input_filepath = "data/owt_train.txt"
 
     # OWT train with TS tokeniser
     # vocab_filepath = "results/vocab_TinyStoriesV2-GPT4-train_10000.json"

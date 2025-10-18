@@ -1,213 +1,213 @@
-Ġ t
-Ġ a
+  t
+  a
 h e
 i n
-Ġt he
+ t he
 r e
-Ġ o
-Ġ ,
+  o
+  ,
 e r
-Ġ s
+  s
 a t
-Ġ .
+  .
 n d
 i s
 o r
-Ġ w
-Ġ c
+  w
+  c
 o n
-Ġ b
-Ġ f
+  b
+  f
 o u
 i t
 e n
 e s
-Ġo f
-Ġ p
+ o f
+  p
 in g
-Ġ in
+  in
 e d
 a l
-Ġ m
-Ġa nd
-Ġ d
+  m
+ a nd
+  d
 a n
 a r
-Ġt o
+ t o
 o m
-Ġt h
+ t h
 i c
 i on
-Ġ h
-Ġ l
-Ġ y
-Ġ e
+  h
+  l
+  y
+  e
 a s
 o t
 i l
-Ġ n
-Ġ u
+  n
+  u
 en t
-Ġb e
-Ġ &
-Ġ is
-Ġy ou
+ b e
+  &
+  is
+ y ou
 o s
-Ġ re
+  re
 e t
-Ġf or
+ f or
 u t
 e l
-Ġ g
+  g
 a y
 s t
 o w
 l e
 c e
 a d
-Ġo n
-Ġ I
+ o n
+  I
 v er
 v e
-Ġ A
+  A
 u r
 o l
 c t
 q u
-Ġth at
+ th at
 i m
 al l
 a m
 i g
 c h
 at ion
-Ġ P
+  P
 it h
 i r
-Ġ S
-Ġ it
-Ġp r
+  S
+  it
+ p r
 a p
-Ġs h
-Ġ C
+ s h
+  C
 t h
-Ġc om
-Ġ @
-Ġw h
+ c om
+  @
+ w h
 - @
-Ġa re
-Ġ@ -@
+ a re
+ @ -@
 n t
 i d
-Ġw ith
-Ġa l
+ w ith
+ a l
 o p
-Ġu s
+ u s
 er s
-Ġa s
+ a s
 t he
 a nd
 i f
 or d
 o d
-Ġ he
+  he
 is t
 qu ot
 m ent
-Ġ M
-Ġo r
+  M
+ o r
 o re
-Ġ G
-Ġf r
+  G
+ f r
 il l
 re s
-Ġs t
+ s t
 es s
 l d
-Ġth is
-Ġ 2
+ th is
+  2
 ar t
-Ġ ;
-Ġ L
+  ;
+  L
 l y
 a in
 u l
-Ġd e
-Ġc on
+ d e
+ c on
 es t
 s e
 ap os
 a g
-Ġfr om
-Ġa n
-Ġw e
-Ġ (
+ fr om
+ a n
+ w e
+  (
 0 0
 t er
-Ġ E
+  E
 e m
 a ve
-Ġn ot
-Ġ )
-Ġ 1
-Ġyou r
+ n ot
+  )
+  1
+ you r
 o c
-Ġc an
-Ġb y
-Ġ D
-Ġn e
-Ġ v
+ c an
+ b y
+  D
+ n e
+  v
 ig h
 ic h
-Ġal l
+ al l
 r i
-Ġu p
-Ġ r
-Ġ W
+ u p
+  r
+  W
 b le
-Ġthe y
-Ġ B
+ the y
+  B
 u n
-Ġy e
-Ġwh ich
-Ġ O
+ y e
+ wh ich
+  O
 k e
-Ġw or
-Ġs u
-Ġ F
-Ġ H
-Ġh ave
+ w or
+ s u
+  F
+  H
+ h ave
 at e
-Ġsh all
-Ġc h
+ sh all
+ c h
 e ct
 it y
-Ġs p
+ s p
 res s
 igh t
-Ġw ill
-Ġcom p
+ w ill
+ com p
 or t
 an t
-Ġ& #
+ & #
 i ve
 a re
 . .
-Ġe x
-ĠA nd
-Ġ. ..
+ e x
+ A nd
+ . ..
 as t
 2 4
-Ġ T
+  T
 ou ld
 v en
-Ġt r
+ t r
 u st
 u m
 ou t
 c om
-Ġu nt
-Ġs e
+ u nt
+ s e
 f t
 re e
 os t
@@ -216,19 +216,19 @@ is h
 ion s
 i z
 1 24
-Ġunt o
+ unt o
 m er
 ing s
-Ġa c
+ a c
 th is
 at ed
 a c
 l u
 e re
-Ġm an
+ m an
 f or
-Ġm y
-Ġa t
+ m y
+ a t
 i es
 ag e
 r ou
@@ -236,8 +236,8 @@ l o
 an s
 p p
 in d
-Ġwor k
+ wor k
 he re
 f ore
-Ġs it
-Ġ ver
+ s it
+  ver

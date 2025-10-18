@@ -18,11 +18,6 @@ import json
 load_dotenv()
 
 
-# Add the tests directory to the path to import gpt2_bytes_to_unicode
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'tests'))
-from common import gpt2_bytes_to_unicode
-
-
 def find_chunk_boundaries(
     file: BinaryIO,
     desired_num_chunks: int,
@@ -295,26 +290,18 @@ def train_bpe(
 
 
 def save_train_bpe_results(vocab, merges, vocab_filename='vocab.json', merges_filename='merges.txt'):
-    # Create GPT-2 style mappings
-    gpt2_bytes_to_unicode_map = gpt2_bytes_to_unicode()
-    
-    # Save vocabulary in GPT-2 JSON format
     vocab_dict = {}
-    for token_id in vocab.keys():
-        token_bytes = vocab[token_id]
-        # Convert bytes to GPT-2 unicode representation
-        token_str = ''.join([gpt2_bytes_to_unicode_map[byte] for byte in token_bytes])
+    for token_id, token_bytes in vocab.items():
+        token_str = token_bytes.decode('utf-8', errors='replace')
         vocab_dict[token_str] = token_id
     with open(vocab_filename, 'w', encoding='utf-8') as f:
         json.dump(vocab_dict, f, ensure_ascii=False, indent=4)
     print(f"Saved {len(vocab)} vocabulary entries to {vocab_filename}")
     
-    # Save merges in GPT-2 format
     with open(merges_filename, 'w', encoding='utf-8') as f:
         for merge in merges:
-            # Convert bytes to GPT-2 unicode representation
-            token1_str = ''.join([gpt2_bytes_to_unicode_map[byte] for byte in merge[0]])
-            token2_str = ''.join([gpt2_bytes_to_unicode_map[byte] for byte in merge[1]])
+            token1_str = merge[0].decode('utf-8', errors='replace')
+            token2_str = merge[1].decode('utf-8', errors='replace')
             f.write(f"{token1_str} {token2_str}\n")
     print(f"Saved {len(merges)} merges to {merges_filename}")
 
@@ -332,10 +319,10 @@ def find_longest_token(vocab: dict[int, bytes]):
 
 if __name__ == "__main__":
     
-    file_dir = "tests/fixtures"
-    file_name = "corpus"
-    vocab_size = 500
-    file_extention = "en"
+    # file_dir = "tests/fixtures"
+    # file_name = "corpus"
+    # vocab_size = 500
+    # file_extention = "en"
 
     # file_dir = "data"
     # file_name = "TinyStoriesV2-GPT4-valid"
@@ -347,10 +334,10 @@ if __name__ == "__main__":
     # file_extention = "txt"
     # vocab_size = 10000
 
-    # file_dir = "data"
-    # file_name = "owt_valid"
-    # file_extention = "txt"
-    # vocab_size = 32000
+    file_dir = "data"
+    file_name = "owt_valid"
+    file_extention = "txt"
+    vocab_size = 32000
 
     # file_dir = "data"
     # file_name = "owt_train"
