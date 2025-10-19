@@ -6,7 +6,6 @@
 
 from dotenv import load_dotenv
 import os
-import sys
 from typing import BinaryIO
 from tqdm import tqdm
 import regex as re

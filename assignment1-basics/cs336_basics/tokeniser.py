@@ -6,7 +6,6 @@
 
 from dotenv import load_dotenv
 import os
-import sys
 from typing import Iterable, Iterator
 import regex as re
 import json
