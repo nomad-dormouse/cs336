@@ -1,14 +1,15 @@
-# 2.6 BPE Tokenizer: Encoding and Decoding
-# 2.7 Experiments
+# 3 Transformer Language Model Architecture
 
-# Problem (tokenizer): Implementing the tokenizer (15 points)
-# Problem (tokenizer_experiments): Experiments with tokenizers (4 points)
+# Problem (linear): Implementing the linear module (1 point)
+# Problem (embedding): Implement the embedding module (1 point)
+# Problem (rmsnorm): Root Mean Square Layer Normalization (1 point)
 
 from dotenv import load_dotenv
 import torch
 from torch import Tensor
 from einops import rearrange, einsum
-from jaxtyping import Float
+from jaxtyping import Float, Int
+
 
 # Load environment variables
 load_dotenv()
@@ -25,23 +26,81 @@ class Linear(torch.nn.Module):
         dtype: torch.dtype | None = None,
     ):
         super().__init__()
-        self.in_features = in_features
-        self.out_features = out_features
+        self.d_in = in_features
+        self.d_out = out_features
         self.device = device
         self.dtype = dtype
         
         # Initialise weight with truncated normal distribution
         # mean = 0, std**2 = 2/(d_in + d_out), truncated at [-3*std, 3*std]
-        self.W = torch.nn.Parameter(torch.empty(out_features, in_features, device=device, dtype=dtype))
-        std = (2 / (in_features + out_features)) ** 0.5
+        self.W = torch.nn.Parameter(torch.empty(self.d_out, self.d_in, device=self.device, dtype=self.dtype))
+        std = (2 / (self.d_in + self.d_out)) ** 0.5
         torch.nn.init.trunc_normal_(self.W, mean=0.0, std=std, a=-3*std, b=3*std)
 
 
     def forward(
         self,
-        x: Float[Tensor, " ... in_features"]
-    ) -> torch.Tensor:
-        return einsum(x, self.W, " ... in_features, out_features in_features -> ... out_features")
+        x: Float[Tensor, " ... d_in"]
+    ) -> Float[Tensor, " ... d_out"]:
+        return einsum(x, self.W, " ... d_in, d_out d_in -> ... d_out")
+
+
+class Embedding(torch.nn.Module):
+
+
+    def __init__(
+        self,
+        num_embeddings: int,
+        embedding_dim: int,
+        device: torch.device | None = None,
+        dtype: torch.dtype | None = None,
+    ):
+        super().__init__()
+        self.vocab_size = num_embeddings
+        self.d_model = embedding_dim
+        self.device = device
+        self.dtype = dtype
+        
+        self.E = torch.nn.Parameter(torch.empty(self.vocab_size, self.d_model, device=self.device, dtype=self.dtype))
+        std = (2 / (self.vocab_size + self.d_model)) ** 0.5
+        torch.nn.init.trunc_normal_(self.E, mean=0.0, std=std, a=-3*std, b=3*std)
+
+
+    def forward(
+        self,
+        token_ids: Int[Tensor, " ..."]
+    ) -> Float[Tensor, " ... d_model"]:
+        return self.E[token_ids]
+
+
+class RMSNorm(torch.nn.Module):
+
+
+    def __init__(
+        self,
+        d_model: int,
+        eps: float = 1e-5,
+        device: torch.device | None = None,
+        dtype: torch.dtype | None = None,
+    ):
+        super().__init__()
+        self.d_model = d_model
+        self.eps = eps
+        self.device = device
+        self.dtype = dtype
+        
+        self.G = torch.nn.Parameter(torch.ones(self.d_model, device=self.device, dtype=self.dtype))
+
+
+    def forward(
+        self,
+        x: Float[Tensor, " d_batch d_seq d_model"]
+    ) -> Float[Tensor, " d_batch d_seq d_model"]:
+        in_dtype = x.dtype
+        x = x.to(torch.float32)
+        result = (x / (x.pow(2).mean(dim=-1, keepdim=True) + self.eps).sqrt()) * self.G
+        
+        return result.to(in_dtype)
 
 
 if __name__ == "__main__":
