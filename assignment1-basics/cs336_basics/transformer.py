@@ -218,7 +218,7 @@ def print_accounting(
     print(f"        Parameters: {accounting["lm_head"]["params"]:,}")
     print(f"        Memory: {accounting["lm_head"]["memory"]:.3f} GB")
     print(f"        Compute: {accounting["lm_head"]["flops"]["Count"]:,} FLOPs\n")
-    print(f"COMPONENT COMPUTE\n")
+    print(f"COMPONENTS COMPUTE\n")
     print(f"    All transformer blocks: {accounting["transformer_blocks"]["total"]["flops"]["Proportion"] * 100:.1f}%")
     print(f"        Attention: {accounting["transformer_blocks"]["per_block"]["attention"]["flops"]["Proportion"] * 100:.1f}%")
     print(f"        FFN: {accounting["transformer_blocks"]["per_block"]["ffn"]["flops"]["Proportion"] * 100:.1f}%\n")
