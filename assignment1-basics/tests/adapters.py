@@ -8,11 +8,12 @@ import numpy.typing as npt
 import torch
 from jaxtyping import Bool, Float, Int
 from torch import Tensor
+from einops import repeat
 
 from cs336_basics.train_bpe import train_bpe
 from cs336_basics.tokeniser import Tokenizer
 from cs336_basics.transformer import softmax, scaled_dot_product_attention
-from cs336_basics.transformer import Linear, Embedding, RMSNorm, SwiGLU, RotaryPositionalEmbedding
+from cs336_basics.transformer import Linear, Embedding, RMSNorm, SwiGLU, RotaryPositionalEmbedding, MultiheadSelfAttention, TransformerBlock,TransformerLM
 
 
 def run_linear(
@@ -34,7 +35,7 @@ def run_linear(
         Float[Tensor, "... d_out"]: The transformed output of your linear module.
     """
     linear = Linear(d_in, d_out)
-    linear.load_state_dict({'w': weights})
+    linear.load_state_dict({'weight': weights})
     
     return linear(in_features)
 
@@ -58,7 +59,7 @@ def run_embedding(
         Float[Tensor, "... d_model"]: Batch of embeddings returned by your Embedding layer.
     """
     embedding = Embedding(vocab_size, d_model)
-    embedding.load_state_dict({'e': weights})
+    embedding.load_state_dict({'weight': weights})
     
     return embedding(token_ids)
 
@@ -87,9 +88,9 @@ def run_swiglu(
     """
     swiglu = SwiGLU(d_model, d_ff)
     swiglu.load_state_dict({
-        "w1.w": w1_weight, 
-        "w2.w": w2_weight, 
-        "w3.w": w3_weight
+        "w1.weight": w1_weight, 
+        "w2.weight": w2_weight, 
+        "w3.weight": w3_weight
     })
     
     return swiglu(in_features)
@@ -113,6 +114,7 @@ def run_scaled_dot_product_attention(
     Returns:
         Float[Tensor, " ... queries d_v"]: Output of SDPA
     """
+    
     return scaled_dot_product_attention(Q, K, V, mask)
 
 
@@ -147,7 +149,15 @@ def run_multihead_self_attention(
         Float[Tensor, " ... sequence_length d_out"]: Tensor with the output of running your optimized, batched multi-headed attention
         implementation with the given QKV projection weights and input features.
     """
-    raise NotImplementedError
+    mha = MultiheadSelfAttention(d_model, num_heads, use_rope=False)
+    mha.load_state_dict({
+        "q_proj.weight": q_proj_weight, 
+        "k_proj.weight": k_proj_weight, 
+        "v_proj.weight": v_proj_weight, 
+        "output_proj.weight": o_proj_weight, 
+    })
+    
+    return mha(in_features)
 
 
 def run_multihead_self_attention_with_rope(
@@ -187,7 +197,15 @@ def run_multihead_self_attention_with_rope(
         Float[Tensor, " ... sequence_length d_out"]: Tensor with the output of running your optimized, batched multi-headed attention
         implementation with the given QKV projection weights and input features.
     """
-    raise NotImplementedError
+    mha = MultiheadSelfAttention(d_model, num_heads, use_rope=True, max_seq_len=max_seq_len, theta=theta)
+    mha.load_state_dict({
+        "q_proj.weight": q_proj_weight, 
+        "k_proj.weight": k_proj_weight, 
+        "v_proj.weight": v_proj_weight, 
+        "output_proj.weight": o_proj_weight, 
+    })
+    
+    return mha(in_features, token_positions)
 
 
 def run_rope(
@@ -283,7 +301,10 @@ def run_transformer_block(
         Float[Tensor, "batch sequence_length d_model"] Tensor with the output of
         running the Transformer block on the input features while using RoPE.
     """
-    raise NotImplementedError
+    transformer_block = TransformerBlock(d_model, num_heads, d_ff, max_seq_len, theta)
+    transformer_block.load_state_dict(weights)
+    
+    return transformer_block(in_features)
 
 
 def run_transformer_lm(
@@ -365,7 +386,18 @@ def run_transformer_lm(
         Float[Tensor, "batch_size sequence_length vocab_size"]: Tensor with the predicted unnormalized
         next-word distribution for each token.
     """
-    raise NotImplementedError
+    transformer_lm = TransformerLM(
+        vocab_size=vocab_size,
+        context_length=context_length,
+        d_model=d_model,
+        num_layers=num_layers,
+        num_heads=num_heads,
+        d_ff=d_ff,
+        theta=rope_theta,
+    )
+    transformer_lm.load_state_dict(weights)
+    
+    return transformer_lm(in_indices)
 
 
 def run_rmsnorm(
@@ -389,7 +421,7 @@ def run_rmsnorm(
         RMSNorm of the `in_features`.
     """
     rmsnorm = RMSNorm(d_model, eps, device=weights.device, dtype=weights.dtype)
-    rmsnorm.load_state_dict({'g': weights})
+    rmsnorm.load_state_dict({'weight': weights})
     
     return rmsnorm(in_features)
 
