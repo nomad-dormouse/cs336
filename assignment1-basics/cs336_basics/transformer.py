@@ -10,17 +10,224 @@
 # Problem (multihead_self_attention): Implement causal multi-head self-attention (5 points)
 # Problem (transformer_block): Implement a Transformer block (5 points)
 # Problem (transformer_lm): Implementing the Transformer LM (3 points)
+# Problem (transformer_accounting): Transformer LM resource accounting (5 points)
 
 from dotenv import load_dotenv
 import torch
 from torch import Tensor, nn
 from einops import einsum, rearrange
 from jaxtyping import Float, Int, Bool
+import json
 
 
 # Load environment variables
 load_dotenv()
 
+
+def transformer_accounting(
+    model_name: str,
+    vocab_size: int,
+    context_length: int,
+    num_layers: int,
+    d_model: int,
+    num_heads: int,
+    d_ff: int,
+    precision_in_bits: int,
+) -> dict[str, int]:
+    # EMBEDDINGS
+    embeddings_params = vocab_size * d_model
+    embeddings_flops = 0    # Lookup operation, not a matrix multiply
+
+    # ALL TRANSFORMER BLOCKS
+
+    # Single transformer block
+    
+    # Two pre-layer RMSNorms: one before attention and one before FFN sub-blocks
+    rmsnorm_params_per_block = 2 * d_model  # 2 matrices of size d_model
+    rmsnorm_flops_per_block = 0 # Does not involve matrix multiplies
+    
+    # Multi-head Self-Attention sub-block
+    attention_params_per_block = 4 * d_model * d_model  # Q, K, V and Output matrices each of size (d_model x d_model)
+    
+    # Rule: Given A ∈ R^(m×n) and B ∈ R^(n×p), the matrix-matrix product AB requires 2mnp FLOPs
+    qkv_proj_flops_per_block = 3 * 2 * context_length * d_model * d_model   # 3 times multiply (context_length x d_model) by (d_model x d_model)
+    d_k = d_model // num_heads # Dimension of Q and K heads
+    qk_flops_per_block = num_heads * 2 * context_length * context_length * d_k  # num_heads times multiply (context_length x d_k) by (d_k x context_length)
+    av_flops_per_block = num_heads * 2 * context_length * context_length * d_k  # num_heads times multiply (context_length x context_length) by (context_length x d_k)
+    output_proj_flops_per_block = 2 * context_length * d_model * d_model   # Multiply (context_length x d_model) by (d_model x d_model)
+
+    attention_flops_per_block = qkv_proj_flops_per_block + qk_flops_per_block + av_flops_per_block + output_proj_flops_per_block
+
+    # SwiGLU Feed-Forward Network sub-block
+    ffn_params_per_block = 3 * d_model * d_ff  # W1 and W3 matrices of size (d_ff x d_model) and W2 matrix of size (d_model x d_ff)
+    ffn_flops_per_block = 3 * 2 * context_length * d_model * d_ff # 2 times multiply (d_ff x d_model) by (d_model x context_length) and 1 time multiply (d_model x d_ff) by (d_ff x context_length)
+
+    single_transformer_block_params = rmsnorm_params_per_block + attention_params_per_block + ffn_params_per_block
+    single_transformer_block_flops = rmsnorm_flops_per_block + attention_flops_per_block + ffn_flops_per_block
+
+    all_transformer_blocks_params = num_layers * single_transformer_block_params
+    all_transformer_blocks_flops = num_layers * single_transformer_block_flops
+    
+    # FINAL LAYER NORM
+    final_layernorm_params = d_model
+    final_layernorm_flops = 0   # Does not involve matrix multiplies
+    
+    # LM HEAD
+    lm_head_params = d_model * vocab_size
+    lm_head_flops = 2 * context_length * d_model * vocab_size # Multiply (context_length x d_model) by (d_model x vocab_size)
+    
+    # TOTAL
+    total_params = embeddings_params + all_transformer_blocks_params + final_layernorm_params + lm_head_params
+    gb_per_param = precision_in_bits / (8 * 1024**3)
+    total_flops = embeddings_flops + all_transformer_blocks_flops + final_layernorm_flops + lm_head_flops
+    
+    results = {
+        "model": {
+            "model_name": model_name,
+            "vocab_size": vocab_size,
+            "context_length": context_length,
+            "num_layers": num_layers,
+            "d_model": d_model,
+            "num_heads": num_heads,
+            "d_ff": d_ff,
+            "precision_in_bits": precision_in_bits,
+        },
+        "accounting": {
+            "total": {
+                "params": total_params,
+                "memory": total_params * gb_per_param,
+                "flops": total_flops,
+            },
+            "embeddings": {
+                "params": embeddings_params,
+                "memory": embeddings_params * gb_per_param,
+                "flops": embeddings_flops,
+            },
+            "transformer_blocks": {
+                "total": {
+                    "params": all_transformer_blocks_params,
+                    "memory": all_transformer_blocks_params * gb_per_param,
+                    "flops": {
+                        "Count": all_transformer_blocks_flops,
+                        "Proportion": all_transformer_blocks_flops / total_flops,
+                    },
+                },
+                "per_block": {
+                    "total": {
+                        "params": single_transformer_block_params,
+                        "memory": single_transformer_block_params * gb_per_param,
+                        "flops": single_transformer_block_flops,
+                    },
+                    "rmsnorm": {
+                        "params": rmsnorm_params_per_block,
+                        "memory": rmsnorm_params_per_block * gb_per_param,
+                        "flops": rmsnorm_flops_per_block,
+                    },
+                    "attention": {
+                        "params": attention_params_per_block,
+                        "memory": attention_params_per_block * gb_per_param,
+                        "flops": {
+                            "Count": attention_flops_per_block,
+                            "Proportion": attention_flops_per_block / single_transformer_block_flops,
+                        },
+                    },
+                    "ffn": {
+                        "params": ffn_params_per_block,
+                        "memory": ffn_params_per_block * gb_per_param,
+                        "flops": {
+                            "Count": ffn_flops_per_block,
+                            "Proportion": ffn_flops_per_block / single_transformer_block_flops,
+                        },
+                    },
+                },
+            },
+            "final_layernorm": {
+                "params": final_layernorm_params,
+                "memory": final_layernorm_params * gb_per_param,
+                "flops": final_layernorm_flops,
+            },
+            "lm_head": {
+                "params": lm_head_params ,
+                "memory": lm_head_params * gb_per_param,
+                "flops": {
+                    "Count": lm_head_flops,
+                    "Proportion": lm_head_flops / total_flops,
+                },
+            },
+        },
+    }
+
+    model_name = results["model"]["model_name"].replace(' ', '')
+    context_length = results["model"]["context_length"]
+    filename = f"results/accounting/{model_name}_ctx{context_length}.json"
+    with open(filename, "w") as f:
+        json.dump(results, f)
+
+    print_accounting(results)
+
+
+def print_accounting(
+    json_data: dict,
+) -> None:
+    model = json_data["model"]
+    accounting = json_data["accounting"]
+    
+    print(f"\nCONFIGURATION\n")
+    print(f"    Name: {model["model_name"]}")
+    print(f"    Vocabulary size: {model["vocab_size"]:,}")
+    print(f"    Context length: {model["context_length"]:,}")
+    print(f"    Number of transformer layers: {model["num_layers"]}")
+    print(f"    Model dimension: {model["d_model"]:,}")
+    print(f"    Number of heads: {model["num_heads"]}")
+    print(f"    Feed-forward dimension: {model["d_ff"]:,}")
+    print(f"    Precision in bits: {model["precision_in_bits"]}\n")
+    print(f"ACCOUNTING\n")
+    print(f"    Total")
+    print(f"        Parameters: {accounting["total"]["params"]:,}")
+    print(f"        Memory: {accounting["total"]["memory"]:.3f} GB")
+    print(f"        Compute: {accounting["total"]["flops"]:,} FLOPs\n")
+    print(f"    Embeddings")
+    print(f"        Parameters: {accounting["embeddings"]["params"]:,}")
+    print(f"        Memory: {accounting["embeddings"]["memory"]:.3f} GB")
+    print(f"        Compute: {accounting["embeddings"]["flops"]:,} FLOPs\n")
+    print(f"    All transformer blocks")
+    print(f"        Parameters: {accounting["transformer_blocks"]["total"]["params"]:,}")
+    print(f"        Memory: {accounting["transformer_blocks"]["total"]["memory"]:.3f} GB")
+    print(f"        Compute: {accounting["transformer_blocks"]["total"]["flops"]["Count"]:,} FLOPs\n")
+    print(f"        Per block")
+    print(f"            Parameters: {accounting["transformer_blocks"]["per_block"]["total"]["params"]:,}")
+    print(f"            Memory: {accounting["transformer_blocks"]["per_block"]["total"]["memory"]:.3f} GB")
+    print(f"            Compute: {accounting["transformer_blocks"]["per_block"]["total"]["flops"]:,} FLOPs\n")
+    print(f"            RMSNorm")
+    print(f"                Parameters: {accounting["transformer_blocks"]["per_block"]["rmsnorm"]["params"]:,}")
+    print(f"                Memory: {accounting["transformer_blocks"]["per_block"]["rmsnorm"]["memory"]:.6f} GB")
+    print(f"                Compute: {accounting["transformer_blocks"]["per_block"]["rmsnorm"]["flops"]:,} FLOPs\n")
+    print(f"            Attention")
+    print(f"                Parameters: {accounting["transformer_blocks"]["per_block"]["attention"]["params"]:,}")
+    print(f"                Memory: {accounting["transformer_blocks"]["per_block"]["attention"]["memory"]:.3f} GB")
+    print(f"                Compute: {accounting["transformer_blocks"]["per_block"]["attention"]["flops"]["Count"]:,} FLOPs\n")
+    print(f"            FFN")
+    print(f"                Parameters: {accounting["transformer_blocks"]["per_block"]["ffn"]["params"]:,}")
+    print(f"                Memory: {accounting["transformer_blocks"]["per_block"]["ffn"]["memory"]:.3f} GB")
+    print(f"                Compute: {accounting["transformer_blocks"]["per_block"]["ffn"]["flops"]["Count"]:,} FLOPs\n")
+    print(f"    Final layernorm")
+    print(f"        Parameters: {accounting["final_layernorm"]["params"]:,}")
+    print(f"        Memory: {accounting["final_layernorm"]["memory"]:.6f} GB")
+    print(f"        Compute: {accounting["final_layernorm"]["flops"]:,} FLOPs\n")
+    print(f"    LM head")
+    print(f"        Parameters: {accounting["lm_head"]["params"]:,}")
+    print(f"        Memory: {accounting["lm_head"]["memory"]:.3f} GB")
+    print(f"        Compute: {accounting["lm_head"]["flops"]["Count"]:,} FLOPs\n")
+    print(f"COMPONENT COMPUTE\n")
+    print(f"    All transformer blocks: {accounting["transformer_blocks"]["total"]["flops"]["Proportion"] * 100:.1f}%")
+    print(f"        Attention: {accounting["transformer_blocks"]["per_block"]["attention"]["flops"]["Proportion"] * 100:.1f}%")
+    print(f"        FFN: {accounting["transformer_blocks"]["per_block"]["ffn"]["flops"]["Proportion"] * 100:.1f}%\n")
+    print(f"    LM head: {accounting["lm_head"]["flops"]["Proportion"] * 100:.1f}% of total FLOPs\n")
+
+def silu(
+    x: Float[Tensor, "..."]
+) -> Float[Tensor, "..."]:
+    return x * torch.sigmoid(x)
 
 def softmax(
     x: Float[Tensor, "..."],
@@ -179,11 +386,11 @@ class SwiGLU(nn.Module):
         self,
         x: Float[Tensor, " ... d_model"]
     ) -> Float[Tensor, " ... d_model"]:
-        # Swish(W1(x)) = W1(x) * Sigmoid(W1(x))
+        # Swish(W1(x))
         w1_out = self.w1(x)
-        swish_out =w1_out * torch.sigmoid(w1_out)
+        swish_out = silu(w1_out)
         
-        # SwiGLU(x, W1, W2, W3) = W2(Swish(W1(x)) * W3(x)) = W2( (W1(x) * Sigmoid(W1(x))) * W3(x))
+        # SwiGLU(x, W1, W2, W3) = W2(Swish(W1(x)) * W3(x))
         w3_out = self.w3(x)
         result = self.w2(swish_out * w3_out)
         
@@ -424,38 +631,37 @@ class TransformerLM(nn.Module):
 
 
 if __name__ == "__main__":
-    # vocab = {i: bytes([i]) for i in range(128)}
-    # vocab[128] = b"<|endoftext|>"
-    # merges = [(b"h", b"e"), (b"l", b"l"), (b"o", b" ")]
-    # tokenizer = Tokenizer(vocab, merges, special_tokens)
-    # text = "hello <|endoftext|><|endoftext|> world"
+    vocab_size = 50257
+    d_ff = 6400
+    precision_in_bits = 32
+    context_length = 1024
 
-    # # Corpus with Corpus tokeniser
-    # vocab_filepath = "results/vocab_corpus_500.json"
-    # merges_filepath = "results/merges_corpus_500.txt"
-    # input_filepath = "tests/fixtures/corpus.en"
+    # model_name = "GPT-2_small"
+    # num_layers = 12
+    # d_model = 786
+    # num_heads = 12
 
-    # # TS valid with TS tokeniser
-    # vocab_filepath = "results/vocab_TinyStoriesV2-GPT4-valid_10000.json"
-    # merges_filepath = "results/merges_TinyStoriesV2-GPT4-valid_10000.txt"
-    # input_filepath = "data/TinyStoriesV2-GPT4-valid.txt"
+    # model_name = "GPT-2_medium"
+    # num_layers = 24
+    # d_model = 1024
+    # num_heads = 16
+
+    # model_name = "GPT-2_large"
+    # num_layers = 36
+    # d_model = 1280
+    # num_heads = 20
+
+    model_name = "GPT-2_XL"
+    num_layers = 48
+    d_model = 1600
+    num_heads = 25
     
-    # # TS train with TS tokeniser
-    # vocab_filepath = "results/vocab_TinyStoriesV2-GPT4-train_10000.json"
-    # merges_filepath = "results/merges_TinyStoriesV2-GPT4-train_10000.txt"
-    # input_filepath = "data/TinyStoriesV2-GPT4-train.txt"
+    # # Context length experiment
+    # model_name = "GPT-2_XL"
+    # num_layers = 48
+    # d_model = 1600
+    # num_heads = 25
+    # context_length = 16384
 
-    # # OWT valid with OWT tokeniser
-    # vocab_filepath = "results/vocab_owt_valid_32000.json"
-    # merges_filepath = "results/merges_owt_valid_32000.txt"
-    # input_filepath = "data/owt_valid.txt"
-
-    # # OWT train with OWT tokeniser
-    # vocab_filepath = "results/vocab_owt_train_32000.json"
-    # merges_filepath = "results/merges_owt_train_32000.txt"
-    # input_filepath = "data/owt_train.txt"
-
-    # OWT train with TS tokeniser
-    vocab_filepath = "results/vocab_TinyStoriesV2-GPT4-train_10000.json"
-    merges_filepath = "results/merges_TinyStoriesV2-GPT4-train_10000.txt"
-    input_filepath = "data/owt_train.txt"
+    args = (model_name, vocab_size, context_length, num_layers, d_model, num_heads, d_ff, precision_in_bits)
+    transformer_accounting(*args)
