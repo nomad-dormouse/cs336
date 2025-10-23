@@ -236,18 +236,19 @@ def adamw_compute(
     #       = 2 * context_length * d_model * vocab_size
 
     # Total FLOPs for performing one optimisation step =
-    #       = 4 * num_layers * (d_model * context_length**2 + 8 * context_length * d_model**2) +
-    #       + 2 * context_length * d_model * vocab_size) =
-    #       = 4 * num_layers * (d_model * context_length**2 + 8 * context_length * d_model**2) + 2 * vocab_size * context_length * d_model
+    #       = 3 *
+    #       * (4 * num_layers * (d_model * context_length**2 + 8 * context_length * d_model**2) +
+    #       + 2 * context_length * d_model * vocab_size)) =
+    #       = 12 * num_layers * (d_model * context_length**2 + 8 * context_length * d_model**2) + 6 * vocab_size * context_length * d_model
 
-    total_compute = 4 * num_layers * (d_model * context_length**2 + 8 * context_length * d_model**2) + 2 * vocab_size * context_length * d_model
+    total_compute = 12 * num_layers * (d_model * context_length**2 + 8 * context_length * d_model**2) + 6 * vocab_size * context_length * d_model
 
     # Seconds required to run optimiser steps time
     #       = steps * batch_size * total_compute / (mfu * theoretical_flops_per_sec)
-    theoretical_flops_per_sec = 19.5 * 10**12
+    theoretical_flops_per_sec = 19.5e12
     mfu = 0.5
     batch_size = 1024
-    steps = 4 * 10**5
+    steps = 4e5
     days_to_train_on_a100 = (steps * batch_size * total_compute / (mfu * theoretical_flops_per_sec)) / (60 * 60 * 24)
 
     return total_compute, days_to_train_on_a100
