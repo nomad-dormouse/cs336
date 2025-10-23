@@ -14,7 +14,7 @@ from cs336_basics.train_bpe import train_bpe
 from cs336_basics.tokeniser import Tokenizer
 from cs336_basics.transformer import silu, softmax, scaled_dot_product_attention
 from cs336_basics.transformer import Linear, Embedding, RMSNorm, SwiGLU, RotaryPositionalEmbedding, MultiheadSelfAttention, TransformerBlock,TransformerLM
-from cs336_basics.train_transformer import cross_entropy
+from cs336_basics.train_transformer import cross_entropy, learning_rate_schedule, gradient_clipping
 from cs336_basics.train_transformer import AdamW
 
 
@@ -508,7 +508,7 @@ def run_gradient_clipping(parameters: Iterable[torch.nn.Parameter], max_l2_norm:
 
     The gradients of the parameters (parameter.grad) should be modified in-place.
     """
-    raise NotImplementedError
+    gradient_clipping(list(parameters), max_l2_norm)
 
 
 def get_adamw_cls() -> Any:
@@ -543,7 +543,13 @@ def run_get_lr_cosine_schedule(
     Returns:
         Learning rate at the given iteration under the specified schedule.
     """
-    raise NotImplementedError
+    return learning_rate_schedule(
+        t=it,
+        alpha_max=max_learning_rate,
+        alpha_min=min_learning_rate,
+        T_w=warmup_iters,
+        T_c=cosine_cycle_iters,
+    )
 
 
 def run_save_checkpoint(

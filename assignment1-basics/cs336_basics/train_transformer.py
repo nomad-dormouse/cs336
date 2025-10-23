@@ -11,6 +11,7 @@ from torch import Tensor, nn, optim
 from jaxtyping import Float, Int
 from typing import Iterable, Optional, Callable
 import json
+import math
 
 
 # Load environment variables
@@ -377,6 +378,48 @@ def cross_entropy(
     
     # Return average loss across all predictions
     return loss.mean() # shape (...) -> ()
+
+
+def learning_rate_schedule(
+    t: int,
+    alpha_max: float,
+    alpha_min: float,
+    T_w: int,
+    T_c: int,
+) -> float:
+    if t < T_w:
+        # Warm-up phase: linear increase from 0 to alpha_max
+        alpha = (t / T_w) * alpha_max
+    elif t <= T_c:
+        # Cosine annealing phase
+        cosine_factor = 0.5 * (1 + math.cos(math.pi * (t - T_w) / (T_c - T_w)))
+        alpha = alpha_min + cosine_factor * (alpha_max - alpha_min)
+    else:
+        # Post-annealing phase: constant at alpha_min
+        alpha = alpha_min
+    
+    return alpha
+
+
+def gradient_clipping(
+    parameters: list[nn.Parameter],
+    max_norm: float,
+    eps: float = 1e-6,
+) -> None:
+    # Collect gradients as a flat vector
+    grads = [p.grad for p in parameters if p.grad is not None]
+    
+    if not grads:
+        return  # no gradients to clip
+    
+    # Compute total L2 norm: sqrt(sum(grad^2))
+    total_norm = torch.norm(torch.stack([g.norm(2) for g in grads]), 2)
+    
+     # Compute scaling factor if total_norm > max_norm
+    if total_norm > max_norm:
+        scale = max_norm / (total_norm + eps)
+        for g in grads:
+            g.mul_(scale)  # scale in-place
 
 
 class AdamW(optim.Optimizer):
