@@ -160,7 +160,7 @@ def transformer_accounting(
 
     model_name = results["model"]["model_name"].replace(' ', '')
     context_length = results["model"]["context_length"]
-    filename = f"results/accounting/{model_name}_ctx{context_length}.json"
+    filename = f"results/accounting/{model_name}_context_{context_length}.json"
     with open(filename, "w") as f:
         json.dump(results, f)
 
@@ -652,17 +652,17 @@ if __name__ == "__main__":
     # d_model = 1280
     # num_heads = 20
 
-    model_name = "GPT-2_XL"
-    num_layers = 48
-    d_model = 1600
-    num_heads = 25
-    
-    # # Context length experiment
     # model_name = "GPT-2_XL"
     # num_layers = 48
     # d_model = 1600
     # num_heads = 25
-    # context_length = 16384
+    
+    # Context length experiment
+    model_name = "GPT-2_XL"
+    num_layers = 48
+    d_model = 1600
+    num_heads = 25
+    context_length = 16384
 
     args = (model_name, vocab_size, context_length, num_layers, d_model, num_heads, d_ff, precision_in_bits)
     transformer_accounting(*args)
