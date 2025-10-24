@@ -17,9 +17,9 @@ import multiprocessing
 from tqdm import tqdm
 
 try:
-    from train_bpe import find_chunk_boundaries
+    from train_tokeniser import find_chunk_boundaries
 except ImportError:
-    from .train_bpe import find_chunk_boundaries
+    from .train_tokeniser import find_chunk_boundaries
 
 
 # Load environment variables

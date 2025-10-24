@@ -226,7 +226,7 @@ def print_accounting(
     print(f"    LM head: {accounting["lm_head"]["flops"]["Proportion"] * 100:.1f}% of total FLOPs\n")
 
 def silu(
-    x: Float[Tensor, "..."]
+    x: Float[Tensor, "..."],
 ) -> Float[Tensor, "..."]:
     return x * torch.sigmoid(x)
 
@@ -274,18 +274,14 @@ class Linear(nn.Module):
         self,
         in_features: int,
         out_features: int,
-        device: torch.device | None = None,
-        dtype: torch.dtype | None = None,
     ):
         super().__init__()
         self.d_in = in_features
         self.d_out = out_features
-        self.device = device
-        self.dtype = dtype
         
         # Initialise weight with truncated normal distribution
         # mean = 0, std**2 = 2/(d_in + d_out), truncated at [-3*std, 3*std]
-        self.weight = nn.Parameter(torch.empty(self.d_out, self.d_in, device=self.device, dtype=self.dtype))
+        self.weight = nn.Parameter(torch.empty(self.d_out, self.d_in))
         std = (2 / (self.d_in + self.d_out)) ** 0.5
         nn.init.trunc_normal_(self.weight, mean=0.0, std=std, a=-3*std, b=3*std)
 
@@ -304,16 +300,12 @@ class Embedding(nn.Module):
         self,
         num_embeddings: int,
         embedding_dim: int,
-        device: torch.device | None = None,
-        dtype: torch.dtype | None = None,
     ):
         super().__init__()
         self.vocab_size = num_embeddings
         self.d_model = embedding_dim
-        self.device = device
-        self.dtype = dtype
         
-        self.weight = nn.Parameter(torch.empty(self.vocab_size, self.d_model, device=self.device, dtype=self.dtype))
+        self.weight = nn.Parameter(torch.empty(self.vocab_size, self.d_model))
         std = (2 / (self.vocab_size + self.d_model)) ** 0.5
         nn.init.trunc_normal_(self.weight, mean=0.0, std=std, a=-3*std, b=3*std)
 
@@ -332,16 +324,12 @@ class RMSNorm(nn.Module):
         self,
         d_model: int,
         eps: float = 1e-5,
-        device: torch.device | None = None,
-        dtype: torch.dtype | None = None,
     ):
         super().__init__()
         self.d_model = d_model
         self.eps = eps
-        self.device = device
-        self.dtype = dtype
         
-        self.weight = nn.Parameter(torch.ones(self.d_model, device=self.device, dtype=self.dtype))
+        self.weight = nn.Parameter(torch.ones(self.d_model))
 
 
     def forward(
@@ -362,13 +350,9 @@ class SwiGLU(nn.Module):
         self,
         d_model: int,
         d_ff: int | None = None,
-        device: torch.device | None = None,
-        dtype: torch.dtype | None = None,
     ):
         super().__init__()
         self.d_model = d_model
-        self.device = device
-        self.dtype = dtype
         
         if d_ff is None:
             # Calculate d_ff as 8/3 * d_model, rounded to nearest multiple of 64
@@ -378,9 +362,9 @@ class SwiGLU(nn.Module):
             self.d_ff = d_ff
         
         # Three linear layers for SwiGLU
-        self.w1 = Linear(d_model, self.d_ff, device=self.device, dtype=self.dtype)
-        self.w2 = Linear(self.d_ff, d_model, device=self.device, dtype=self.dtype)
-        self.w3 = Linear(d_model, self.d_ff, device=self.device, dtype=self.dtype)
+        self.w1 = Linear(d_model, self.d_ff)
+        self.w2 = Linear(self.d_ff, d_model)
+        self.w3 = Linear(d_model, self.d_ff)
 
 
     def forward(
@@ -406,19 +390,17 @@ class RotaryPositionalEmbedding(nn.Module):
         theta: float,
         d_k: int,
         max_seq_len: int,
-        device: torch.device | None = None,
     ):
         super().__init__()
         self.theta = theta
         self.d_k = d_k
         self.max_seq_len = max_seq_len
-        self.device = device
         
         # Pre-compute sin and cos values for efficiency
-        pairs_indices = torch.arange(0, d_k, 2, device=self.device)
+        pairs_indices = torch.arange(0, d_k, 2)
         freqs = 1.0 / (theta ** (pairs_indices / self.d_k))
 
-        positions = torch.arange(max_seq_len, device=self.device)
+        positions = torch.arange(max_seq_len)
 
         angles = einsum(positions, freqs, "pos, freq -> pos freq")
         
@@ -579,7 +561,7 @@ class TransformerLM(nn.Module):
         num_layers: int,
         num_heads: int,
         d_ff: int,
-        theta: float,
+        theta: float = 10000.0,
     ):
         super().__init__()
         self.vocab_size = vocab_size

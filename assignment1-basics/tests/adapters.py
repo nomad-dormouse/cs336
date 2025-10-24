@@ -10,12 +10,32 @@ from jaxtyping import Bool, Float, Int
 from torch import Tensor
 from einops import repeat
 
-from cs336_basics.train_bpe import train_bpe
+from cs336_basics.train_tokeniser import train_bpe
 from cs336_basics.tokeniser import Tokenizer
-from cs336_basics.transformer import silu, softmax, scaled_dot_product_attention
-from cs336_basics.transformer import Linear, Embedding, RMSNorm, SwiGLU, RotaryPositionalEmbedding, MultiheadSelfAttention, TransformerBlock,TransformerLM
-from cs336_basics.train_transformer import cross_entropy, learning_rate_schedule, gradient_clipping, data_loading, save_checkpoint, load_checkpoint
-from cs336_basics.train_transformer import AdamW
+from cs336_basics.transformer import (
+    silu,
+    softmax,
+    scaled_dot_product_attention,
+    Linear,
+    Embedding,
+    RMSNorm,
+    SwiGLU,
+    RotaryPositionalEmbedding,
+    MultiheadSelfAttention,
+    TransformerBlock,TransformerLM,
+)
+from cs336_basics.optimiser import (
+    cross_entropy,
+    get_lr_cosine_schedule,
+    gradient_clipping,
+    AdamW,
+)
+
+from cs336_basics.train_transformer import (
+    get_batch,
+    save_checkpoint,
+    load_checkpoint,
+)
 
 
 def run_linear(
@@ -422,7 +442,7 @@ def run_rmsnorm(
         Float[Tensor,"... d_model"]: Tensor of with the same shape as `in_features` with the output of running
         RMSNorm of the `in_features`.
     """
-    rmsnorm = RMSNorm(d_model, eps, device=weights.device, dtype=weights.dtype)
+    rmsnorm = RMSNorm(d_model, eps)
     rmsnorm.load_state_dict({'weight': weights})
     
     return rmsnorm(in_features)
@@ -462,7 +482,7 @@ def run_get_batch(
         is the sampled input sequences, and the second tuple item is the corresponding
         language modeling labels.
     """
-    return data_loading(dataset, batch_size, context_length, device)
+    return get_batch(dataset, batch_size, context_length, device)
 
 
 def run_softmax(in_features: Float[Tensor, " ..."], dim: int) -> Float[Tensor, " ..."]:
@@ -543,7 +563,7 @@ def run_get_lr_cosine_schedule(
     Returns:
         Learning rate at the given iteration under the specified schedule.
     """
-    return learning_rate_schedule(
+    return get_lr_cosine_schedule(
         t=it,
         alpha_max=max_learning_rate,
         alpha_min=min_learning_rate,

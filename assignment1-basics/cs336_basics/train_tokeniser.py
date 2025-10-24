@@ -1,5 +1,9 @@
+# 2.1 The Unicode Standard
+# 2.2 Unicode Encodings
 # 2.5 Experimenting with BPE Tokenizer Training
 
+# Problem (unicode1): Understanding Unicode (1 point)
+# Problem (unicode2): Unicode Encodings (3 points)
 # Problem (train_bpe): BPE Tokenizer Training (15 points)
 # Problem (train_bpe_tinystories): BPE Training on TinyStories (2 points)
 # Problem (train_bpe_expts_owt): BPE Training on OpenWebText (2 points)
@@ -16,6 +20,37 @@ import json
 
 # Load environment variables
 load_dotenv()
+
+
+def decode_utf8_bytes_to_str_wrong(bytestring: bytes):
+        return "".join([bytes([b]).decode("utf-8") for b in bytestring])
+
+
+def unicode():
+    print(chr(0))
+    print(repr(chr(0)))
+    print("this is a test" + chr(0) + "string")
+
+    test_string = "hello! こんにちは!"
+    utf8_encoded = test_string.encode("utf-8")
+    print(utf8_encoded)
+    print(type(utf8_encoded))
+
+    list(utf8_encoded)
+    print(len(test_string))
+    print(len(utf8_encoded))
+    print(utf8_encoded.decode("utf-8"))
+
+    print(test_string)
+    print(test_string.encode("utf-8"))
+    print(test_string.encode("utf-16"))
+    print(test_string.encode("utf-32"))
+
+    print(decode_utf8_bytes_to_str_wrong("hello".encode("utf-8")))
+    print(decode_utf8_bytes_to_str_wrong(test_string.encode("utf-8")))
+
+    b = bytes([255, 255])
+    print(b.decode("utf-32"))
 
 
 def find_chunk_boundaries(
@@ -318,6 +353,8 @@ def find_longest_token(vocab: dict[int, bytes]):
 
 
 if __name__ == "__main__":
+    
+    # unicode()
     
     # file_dir = "tests/fixtures"
     # file_name = "corpus"

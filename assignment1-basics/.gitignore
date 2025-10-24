@@ -172,5 +172,7 @@ profile.json
 scalene_*.html
 scalene_*.json
 
-# Tokenised files
+# Results
 results/tokenised/
+results/checkpoints/
+results/wandb/
