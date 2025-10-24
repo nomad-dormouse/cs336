@@ -1,17 +1,23 @@
 # 3 Training a Transformer LM
 
 # Problem (cross_entropy): Implement Cross entropy
+# Problem (learning_rate_tuning): Tuning the learning rate (1 point)
 # Problem (adamw): Implement AdamW (2 points)
-# Problem (adamwAccounting): Resource accounting for training with AdamW
+# Problem (adamwAccounting): Resource accounting for training with AdamW (2 points)
+# Problem (learning_rate_schedule): Implement cosine learning rate schedule with warmup
+# Problem (gradient_clipping): Implement gradient clipping (1 point)
+# Problem (data_loading): Implement data loading (2 points)
 
 
 from dotenv import load_dotenv
 import torch
 from torch import Tensor, nn, optim
 from jaxtyping import Float, Int
-from typing import Iterable, Optional, Callable
+from typing import Iterable, Optional, Callable, Union, BinaryIO, IO
 import json
 import math
+import numpy as np
+import os
 
 
 # Load environment variables
@@ -420,6 +426,64 @@ def gradient_clipping(
         scale = max_norm / (total_norm + eps)
         for g in grads:
             g.mul_(scale)  # scale in-place
+
+
+def data_loading(
+    data: np.ndarray,
+    batch_size: int,
+    context_length: int,
+    device: str,
+) -> tuple[Int[Tensor, "batch_size context_length"], Int[Tensor, "batch_size context_length"]]:
+    # Each sequence needs context_length tokens, so we can start at any index i, where (i + context_length) < len(data)
+    max_start_idx = len(data) - context_length - 1
+    
+    # Randomly sample batch_size starting indices
+    start_indices = np.random.randint(0, max_start_idx + 1, size=batch_size)
+    
+    input_sequences = []
+    target_sequences = []
+    for start_idx in start_indices:
+        input_seq = data[start_idx:start_idx + context_length]
+        target_seq = data[start_idx + 1:start_idx + context_length + 1]
+        input_sequences.append(input_seq)
+        target_sequences.append(target_seq)
+    
+    # Convert to tensors and move to device
+    input_tensor = torch.tensor(np.array(input_sequences), dtype=torch.long, device=device)
+    target_tensor = torch.tensor(np.array(target_sequences), dtype=torch.long, device=device)
+    
+    return input_tensor, target_tensor
+
+
+def save_checkpoint(
+    model: nn.Module,
+    optimiser: optim.Optimizer,
+    iteration: int,
+    out: Union[str, os.PathLike, BinaryIO, IO[bytes]],
+) -> None:
+    checkpoint = {
+        'model_state_dict': model.state_dict(),
+        'optimiser_state_dict': optimiser.state_dict(),
+        'iteration': iteration,
+    }
+    torch.save(checkpoint, out)
+
+
+def load_checkpoint(
+    src: Union[str, os.PathLike, BinaryIO, IO[bytes]],
+    model: nn.Module,
+    optimiser: optim.Optimizer,
+) -> int:
+    checkpoint = torch.load(src)
+    
+    # Restore model state
+    model.load_state_dict(checkpoint['model_state_dict'])
+    
+    # Restore optimizer state
+    optimiser.load_state_dict(checkpoint['optimiser_state_dict'])
+    
+    # Return the iteration number
+    return checkpoint['iteration']
 
 
 class AdamW(optim.Optimizer):
