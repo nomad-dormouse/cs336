@@ -465,33 +465,33 @@ if __name__ == "__main__":
     # text = "hello <|endoftext|><|endoftext|> world"
 
     # # Corpus with Corpus tokeniser
-    # vocab_filepath = "results/vocab_corpus_500.json"
-    # merges_filepath = "results/merges_corpus_500.txt"
+    # vocab_filepath = "results/tokeniser/vocab_corpus_500.json"
+    # merges_filepath = "results/tokeniser/merges_corpus_500.txt"
     # input_filepath = "tests/fixtures/corpus.en"
 
     # # TS valid with TS tokeniser
-    # vocab_filepath = "results/vocab_TinyStoriesV2-GPT4-valid_10000.json"
-    # merges_filepath = "results/merges_TinyStoriesV2-GPT4-valid_10000.txt"
+    # vocab_filepath = "results/tokeniser/vocab_TinyStoriesV2-GPT4-valid_10000.json"
+    # merges_filepath = "results/tokeniser/merges_TinyStoriesV2-GPT4-valid_10000.txt"
     # input_filepath = "data/TinyStoriesV2-GPT4-valid.txt"
     
-    # # TS train with TS tokeniser
-    # vocab_filepath = "results/vocab_TinyStoriesV2-GPT4-train_10000.json"
-    # merges_filepath = "results/merges_TinyStoriesV2-GPT4-train_10000.txt"
-    # input_filepath = "data/TinyStoriesV2-GPT4-train.txt"
+    # TS train with TS tokeniser
+    vocab_filepath = "results/tokeniser/vocab_TinyStoriesV2-GPT4-train_10000.json"
+    merges_filepath = "results/tokeniser/merges_TinyStoriesV2-GPT4-train_10000.txt"
+    input_filepath = "data/TinyStoriesV2-GPT4-train.txt"
 
     # # OWT valid with OWT tokeniser
-    # vocab_filepath = "results/vocab_owt_valid_32000.json"
-    # merges_filepath = "results/merges_owt_valid_32000.txt"
+    # vocab_filepath = "results/tokeniser/vocab_owt_valid_32000.json"
+    # merges_filepath = "results/tokeniser/merges_owt_valid_32000.txt"
     # input_filepath = "data/owt_valid.txt"
 
-    # OWT train with OWT tokeniser
-    vocab_filepath = "results/vocab_owt_train_32000.json"
-    merges_filepath = "results/merges_owt_train_32000.txt"
-    input_filepath = "data/owt_train.txt"
+    # # OWT train with OWT tokeniser
+    # vocab_filepath = "results/tokeniser/vocab_owt_train_32000.json"
+    # merges_filepath = "results/tokeniser/merges_owt_train_32000.txt"
+    # input_filepath = "data/owt_train.txt"
 
     # OWT train with TS tokeniser
-    # vocab_filepath = "results/vocab_TinyStoriesV2-GPT4-train_10000.json"
-    # merges_filepath = "results/merges_TinyStoriesV2-GPT4-train_10000.txt"
+    # vocab_filepath = "results/tokeniser/vocab_TinyStoriesV2-GPT4-train_10000.json"
+    # merges_filepath = "results/tokeniser/merges_TinyStoriesV2-GPT4-train_10000.txt"
     # input_filepath = "data/owt_train.txt"
 
     # test_tokeniser(

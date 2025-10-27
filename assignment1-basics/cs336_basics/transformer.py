@@ -16,7 +16,7 @@
 from dotenv import load_dotenv
 import torch
 from torch import Tensor, nn
-from einops import einsum, rearrange
+from einops import einsum, rearrange, repeat
 from jaxtyping import Float, Int, Bool
 import json
 
@@ -233,16 +233,24 @@ def silu(
 def softmax(
     x: Float[Tensor, "..."],
     dim: int,
+    temperature: float = 1.0,
 ) -> Float[Tensor, "..."]:
+    # Perform greedy decoding if temperature is 0
+    if temperature == 0.0:
+        output = torch.zeros_like(x)
+        argmax_indices = x.argmax(dim=dim, keepdim=True)
+        output.scatter_(dim=dim, index=argmax_indices, value=1.0)
+        return output
+    
     # Subtract the maximum value for numerical stability
-    x_max = x.max(dim=dim, keepdim=True)[0]
+    x_max = x.max(dim=dim, keepdim=True).values
     x_shifted = x - x_max
+    x_scaled = x_shifted / temperature
     
-    # Compute softmax: exp(x_shifted) / sum(exp(x_shifted))
-    exp_x = torch.exp(x_shifted)
-    sum_exp = exp_x.sum(dim=dim, keepdim=True)
+    exp_x_scaled = torch.exp(x_scaled)
+    sum_exp_x_scaled = exp_x_scaled.sum(dim=dim, keepdim=True)
     
-    return exp_x / sum_exp
+    return exp_x_scaled / sum_exp_x_scaled
 
 
 def scaled_dot_product_attention(
@@ -484,6 +492,7 @@ class MultiheadSelfAttention(nn.Module):
         if self.use_rope:
             if token_positions is None:
                 token_positions = torch.arange(Q.shape[-2])
+            token_positions = repeat(token_positions, "... seq_len -> ... num_heads seq_len", num_heads=Q.shape[-3])
             Q = self.rope(Q, token_positions)
             K = self.rope(K, token_positions)
 

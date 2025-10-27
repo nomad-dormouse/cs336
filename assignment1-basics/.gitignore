@@ -173,6 +173,5 @@ scalene_*.html
 scalene_*.json
 
 # Results
-results/tokenised/
-results/checkpoints/
-results/wandb/
+results/models
+results/tokeniser

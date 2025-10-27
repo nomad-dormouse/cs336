@@ -390,8 +390,8 @@ if __name__ == "__main__":
     save_train_bpe_results(
         vocab,
         merges,
-        vocab_filename=f"results/vocab_{file_name}_{vocab_size}.json",
-        merges_filename=f"results/merges_{file_name}_{vocab_size}.txt",
+        vocab_filename=f"results/tokeniser/vocab_{file_name}_{vocab_size}.json",
+        merges_filename=f"results/tokeniser/merges_{file_name}_{vocab_size}.txt",
     )
 
     find_longest_token(vocab)
