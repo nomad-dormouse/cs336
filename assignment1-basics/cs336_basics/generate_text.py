@@ -24,6 +24,9 @@ load_dotenv()
 def parse_args():
     parser = argparse.ArgumentParser(description="Generate text from a trained language model")
     
+    # Device
+    parser.add_argument("--device", type=str, default="cpu", help="Device to use (auto, cpu, cuda, mps)")
+
     # Model
     parser.add_argument("--model_filename", type=str, required=True, help="Name of the file that contains the model")
     
@@ -32,7 +35,6 @@ def parse_args():
     parser.add_argument("--max_tokens", type=int, default=100, help="Maximum tokens to generate")
     parser.add_argument("--temperature", type=float, default=0.0, help="Sampling temperature")
     parser.add_argument("--top_p", type=float, default=0.9, help="Top-p sampling threshold")
-    parser.add_argument("--device", type=str, default="cpu", help="Device to use (auto, cpu, cuda, mps)")
     
     return parser.parse_args()
 
@@ -43,11 +45,15 @@ def convert_args(args: argparse.Namespace) -> dict:
     model_path = f"results/models/trained/{args.model_filename}.pt"
 
     name = args.model_filename.replace('.pt', '')
-    pattern = r'c(\d+)-n(\d+)-d(\d+)-h(\d+)-b(\d+)-i(\d+)-(\w+)'
+    # Updated pattern to include f (d_ff) and make trailing device optional (ignored)
+    pattern = r'v(\d+)-c(\d+)-d(\d+)-f(\d+)-l(\d+)-h(\d+)-b(\d+)-i(\d+)-(\w+)(?:-(\w+))?(?:-test)?'
     match = re.match(pattern, name)
     if not match:
-        raise ValueError(f"Invalid model filename format: {args.model_filename}. Expected format: c{{context_length}}-n{{num_layers}}-d{{d_model}}-h{{num_heads}}-b{{batch_size}}-i{{max_iters}}-{{dataset}}")
-    context_length, num_layers, d_model, num_heads, batch_size, max_iters, dataset = match.groups()
+        raise ValueError(
+            f"Invalid model filename format: {args.model_filename}. Expected format: "
+            f"v{vocab_size}-c{context_length}-d{d_model}-f{d_ff}-l{num_layers}-h{num_heads}-b{batch_size}-i{max_iters}-{dataset}[-device][-test]"
+        )
+    vocab_size, context_length, d_model, d_ff, num_layers, num_heads, batch_size, max_iters, dataset, _ignored_device = match.groups()
 
     if dataset == "TS":
         vocab_size = 10000
@@ -66,6 +72,7 @@ def convert_args(args: argparse.Namespace) -> dict:
         'context_length': int(context_length),
         'num_layers': int(num_layers),
         'd_model': int(d_model),
+        'd_ff': int(d_ff),
         'num_heads': int(num_heads),
         'batch_size': int(batch_size),
         'max_iters': int(max_iters),
@@ -116,10 +123,10 @@ def generate_text(
     temperature: float = 0.0,
     top_p: float = 1.0,
 ) -> str:
+    model.eval()
+
     eot_token = os.getenv("ENDOFTEXT_TOKEN").encode("utf-8")
     eot_token_id = tokeniser.token_to_id.get(eot_token)
-
-    model.eval()
     
     # Encode the prompt
     prompt_tokens = tokeniser.encode(prompt)
@@ -168,6 +175,7 @@ def test_generation(
     args: argparse.Namespace,
 ) -> None:
     params = convert_args(args)
+    print(f"Using device: {params['device']}")
     
     # Load model
     print("Loading model...")
@@ -187,9 +195,13 @@ def test_generation(
         num_layers=params['num_layers'],
         d_model=params['d_model'],
         num_heads=params['num_heads'],
-        d_ff=4 * params['d_model'],  # Standard: 4 * d_model
+        d_ff=params['d_ff'],
     )
-    model.load_state_dict(checkpoint['model_state_dict'])
+    state_dict = checkpoint['model_state_dict']
+    # Handle models saved under torch.compile where keys are prefixed with '_orig_mod.'
+    if any(k.startswith('_orig_mod.') for k in state_dict.keys()):
+        state_dict = {k.replace('_orig_mod.', '', 1): v for k, v in state_dict.items()}
+    model.load_state_dict(state_dict)
     model = model.to(params['device'])
     
     # Generate text

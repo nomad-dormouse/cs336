@@ -12,10 +12,12 @@ from jaxtyping import Int
 import time
 from pathlib import Path
 import numpy as np
+import math
 import torch
 from torch import Tensor, nn, optim
 import wandb
 import os
+import psutil
 from tqdm import tqdm
 
 from cs336_basics.transformer import TransformerLM
@@ -65,21 +67,21 @@ def parse_args():
     parser.add_argument("--checkpoint_interval", type=int, default=200, help="Save checkpoint every N iterations")
     parser.add_argument("--resume_from", type=str, default=None, help="Path to checkpoint to resume from")
     parser.add_argument("--no_wandb", action="store_true", help="Disable Weights and Biases logging")
+    parser.add_argument("--test_mode", type=int, default=0, help="Test mode: overfit to a single batch (0 = off, 1 = on)")
     
     return parser.parse_args()
 
 
-def get_data_paths(dataset: str) -> tuple[str, str]:
-    if dataset == "TS":
-        train_data = "results/tokeniser/tokenised_texts/TinyStoriesV2-GPT4-train_tokenised.npy"
-        val_data = "results/tokeniser/tokenised_texts/TinyStoriesV2-GPT4-valid_tokenised.npy"
-    elif dataset == "OWT":
-        train_data = "results/tokeniser/tokenised_texts/owt_train_tokenised.npy"
-        val_data = "results/tokeniser/tokenised_texts/owt_valid_tokenised.npy"
+def get_device(device: str) -> torch.device:
+    if device == "auto":
+        if torch.cuda.is_available():
+            return torch.device("cuda")
+        elif hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+            return torch.device("mps")
+        else:
+            return torch.device("cpu")
     else:
-        raise ValueError(f"Unknown dataset: {dataset}. Supported datasets: TS, OWT")
-    
-    return train_data, val_data
+        return torch.device(device)
 
 
 def calculate_training_parameters(
@@ -94,29 +96,20 @@ def calculate_training_parameters(
     print(f"{args.context_length} context / {args.batch_size} batch: {memory:.3f} GB")
 
     tokens = args.max_iters * args.batch_size * args.context_length
-    print(f"{args.max_iters} iters: {tokens:,} tokens\n")    
+    print(f"{args.max_iters} iters: {tokens:,} tokens\n")
 
 
-def get_input_and_target(
-    device: str,
-    data: np.ndarray,
-    start_indices: list[int],
-    context_length: int,
-) -> tuple[Int[Tensor, "start_indices_len context_length"], Int[Tensor, "start_indices_len context_length"]]:
-    # Get input and target sequences from start indices
-    input_sequences = []
-    target_sequences = []
-    for start_idx in start_indices:
-        input_seq = data[start_idx:start_idx + context_length]
-        target_seq = data[start_idx + 1:start_idx + context_length + 1]
-        input_sequences.append(input_seq)
-        target_sequences.append(target_seq)
+def get_data_paths(dataset: str) -> tuple[str, str]:
+    if dataset == "TS":
+        train_data = "results/tokeniser/tokenised_texts/TinyStoriesV2-GPT4-train_tokenised.npy"
+        val_data = "results/tokeniser/tokenised_texts/TinyStoriesV2-GPT4-valid_tokenised.npy"
+    elif dataset == "OWT":
+        train_data = "results/tokeniser/tokenised_texts/owt_train_tokenised.npy"
+        val_data = "results/tokeniser/tokenised_texts/owt_valid_tokenised.npy"
+    else:
+        raise ValueError(f"Unknown dataset: {dataset}. Supported datasets: TS, OWT")
     
-    # Convert to tensors and move to device
-    input_tensor = torch.tensor(np.array(input_sequences), dtype=torch.long, device=device)
-    target_tensor = torch.tensor(np.array(target_sequences), dtype=torch.long, device=device)
-
-    return input_tensor, target_tensor
+    return train_data, val_data
 
 
 def get_batch(
@@ -141,6 +134,82 @@ def get_batch(
     )
     
     return input_tensor, target_tensor
+
+
+def get_input_and_target(
+    device: str,
+    data: np.ndarray,
+    start_indices: list[int],
+    context_length: int,
+) -> tuple[Int[Tensor, "start_indices_len context_length"], Int[Tensor, "start_indices_len context_length"]]:
+    # Get input and target sequences from start indices
+    input_sequences = []
+    target_sequences = []
+    for start_idx in start_indices:
+        input_seq = data[start_idx:start_idx + context_length]
+        target_seq = data[start_idx + 1:start_idx + context_length + 1]
+        input_sequences.append(input_seq)
+        target_sequences.append(target_seq)
+    
+    # Convert to tensors and move to device
+    input_tensor = torch.tensor(np.array(input_sequences), dtype=torch.long, device=device)
+    target_tensor = torch.tensor(np.array(target_sequences), dtype=torch.long, device=device)
+
+    return input_tensor, target_tensor
+    
+
+def train_step(
+    model: nn.Module,
+    optimiser: AdamW,
+    input_tensor: Int[Tensor, "batch_size context_length"],
+    target_tensor: Int[Tensor, "batch_size context_length"],
+    grad_clip: float,
+) -> tuple[float, float]:
+    # Forward pass
+    logits = model(input_tensor)
+    loss = cross_entropy(logits, target_tensor)
+    
+    # Backward pass
+    optimiser.zero_grad()
+    loss.backward()
+    
+    # Gradient clipping (returns gradient norm before clipping)
+    grad_norm = gradient_clipping(list(model.parameters()), grad_clip)
+    
+    # Optimizer step
+    optimiser.step()
+    
+    return logits, loss.item(), grad_norm
+
+
+def evaluate_model(
+    model: nn.Module,
+    input_tensor: Int[Tensor, "batch_size context_length"],
+    target_tensor: Int[Tensor, "batch_size context_length"],
+) -> tuple[float, float, float, float, float]:
+    model.eval()
+    
+    with torch.no_grad():
+        # Forward pass
+        logits = model(input_tensor)
+        loss = cross_entropy(logits, target_tensor)
+        
+        # Accuracy
+        preds = torch.argmax(logits, dim=-1)
+        accuracy = (preds == target_tensor).float().mean()
+        
+        # Perplexity
+        perplexity = loss.exp()
+
+        # Weight norm (L2 norm of all trainable parameters)
+        weight_norm = sum(p.pow(2).sum() for p in model.parameters() if p.requires_grad).sqrt()
+        
+        # Memory usage (RSS in MB)
+        memory_mb = psutil.Process().memory_info().rss / 1024 / 1024
+        
+    model.train()
+
+    return loss.item(), accuracy.item(), perplexity.item(), weight_norm.item(), memory_mb
 
 
 def save_checkpoint(
@@ -174,106 +243,6 @@ def load_checkpoint(
     return checkpoint['iteration']
 
 
-def get_device(device: str) -> torch.device:
-    if device == "auto":
-        if torch.cuda.is_available():
-            return torch.device("cuda")
-        elif hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
-            return torch.device("mps")
-        else:
-            return torch.device("cpu")
-    else:
-        return torch.device(device)
-
-
-def load_training_data(train_data_path: str) -> np.ndarray:
-    print(f"\nLoading training data using memmap from {train_data_path}...")
-    data = np.load(train_data_path, mmap_mode='r')  # Memory-mapped read-only
-    print(f"{data.shape[0]:,} training tokens loaded")
-    
-    return data
-
-
-def get_val_batch(
-    device: str,
-    val_data_path: str,
-    val_batch_size: int,
-    context_length: int,
-    seed: int = 42,
-) -> tuple[Int[Tensor, "val_batch_size context_length"], Int[Tensor, "val_batch_size context_length"]]:
-    print(f"\nLoading validation data from {val_data_path}...")
-    data = np.load(val_data_path)
-
-    np.random.seed(seed)
-    max_start_idx = len(data) - context_length - 1
-    start_indices = np.random.choice(max_start_idx + 1, size=val_batch_size, replace=False)
-
-    input_tensor, target_tensor = get_input_and_target(
-        device=device,
-        data=data,
-        start_indices=start_indices,
-        context_length=context_length,
-    )
-    print(f"{val_batch_size} input and target sequences of {context_length} tokens selected for validation")
-
-    return input_tensor, target_tensor
-
-
-def evaluate_model(
-    model: nn.Module,
-    val_input_tensor: Int[Tensor, "val_batch_size context_length"],
-    val_target_tensor: Int[Tensor, "val_batch_size context_length"],
-    train_input_tensor: Int[Tensor, "batch_size context_length"],
-    train_target_tensor: Int[Tensor, "batch_size context_length"],
-) -> tuple[float, Int[Tensor, "batch_size context_length"], Int[Tensor, "batch_size context_length"]]:
-    model.eval()
-    with torch.no_grad():
-        val_logits = model(val_input_tensor)
-        val_loss = cross_entropy(val_logits, val_target_tensor)
-        train_logits_for_check = model(train_input_tensor)
-        train_loss_for_check = cross_entropy(train_logits_for_check, train_target_tensor)
-    model.train()
-
-    return val_loss.item(), train_loss_for_check.item()
-
-def train_step(
-    device: str,
-    model: nn.Module,
-    optimiser: AdamW,
-    train_data: np.ndarray,
-    batch_size: int,
-    context_length: int,
-    grad_clip: float,
-) -> tuple[
-    float,
-    Int[Tensor, "batch_size context_length"],
-    Int[Tensor, "batch_size context_length"],
-]:
-    # Get batch
-    train_input_tensor, train_target_tensor = get_batch(
-        device=device,
-        data=train_data,
-        batch_size=batch_size,
-        context_length=context_length,
-    )
-    
-    # Forward pass
-    logits = model(train_input_tensor)
-    loss = cross_entropy(logits, train_target_tensor)
-    
-    # Backward pass
-    optimiser.zero_grad()
-    loss.backward()
-    
-    # Gradient clipping
-    gradient_clipping(list(model.parameters()), grad_clip)
-    
-    # Optimizer step
-    optimiser.step()
-    
-    return loss.item(), train_input_tensor, train_target_tensor
-
-
 def training_loop(
     device: str,
     model: nn.Module,
@@ -281,12 +250,21 @@ def training_loop(
     train_data: np.ndarray,
     val_input_tensor: Int[Tensor, "args.val_batch_size args.context_length"],
     val_target_tensor: Int[Tensor, "args.val_batch_size args.context_length"],
+    run_name: str,
     args: argparse.Namespace,
     start_iteration: int = 0,
 ) -> None:
-    print("\nStarting training loop...\n")
     model.train()
     start_time = time.time()
+
+    if args.test_mode == 1:
+        print("TEST MODE: Model will be trained on a single batch\n")
+        train_input_tensor, train_target_tensor = get_batch(
+            device=device,
+            data=train_data,
+            batch_size=args.batch_size,
+            context_length=args.context_length,
+        )
     
     for iteration in tqdm(range(start_iteration, args.max_iters)):
         # Get learning rate
@@ -302,61 +280,81 @@ def training_loop(
         for param_group in optimiser.param_groups:
             param_group['lr'] = lr
         
+        if args.test_mode == 0:
+            # Get batch
+            train_input_tensor, train_target_tensor = get_batch(
+                device=device,
+                data=train_data,
+                batch_size=args.batch_size,
+                context_length=args.context_length,
+            )
+
         # Training step
-        loss, train_input_tensor, train_target_tensor = train_step(
-            device,
+        train_logits, train_loss, grad_norm = train_step(
             model,
             optimiser,
-            train_data,
-            args.batch_size,
-            args.context_length,
+            train_input_tensor,
+            train_target_tensor,
             args.grad_clip,
         )
         
         # Evaluation and logging
         if (iteration + 1) % args.eval_and_log_interval == 0 and iteration > 0:
             elapsed_time = time.time() - start_time
-            val_loss, train_loss_for_check = evaluate_model(model, val_input_tensor, val_target_tensor, train_input_tensor, train_target_tensor)
-            print(f"Iter {iteration:6d} | Loss: {loss:.4f} | LR: {lr:.2e} | Val loss: {val_loss:.4f}\n")
+
+            # Training metrics
+            train_preds = train_logits.argmax(dim=-1)
+            train_accuracy = (train_preds == train_target_tensor).float().mean().item()
+
+            train_perplexity = math.exp(train_loss)
+            
+            # Validation metrics
+            val_loss, val_accuracy, val_perplexity, weight_norm, memory_mb = evaluate_model(
+                model,
+                val_input_tensor,
+                val_target_tensor,
+            )
+            
+            print(f"Iter {iteration:6d} | Train loss: {train_loss:.4f} | Val loss: {val_loss:.4f}\n")
             
             if not args.no_wandb:
                 wandb.log({
                     "iteration": iteration,
-                    "learning_rate": lr,
                     "elapsed_time": elapsed_time,
-                    "train_loss": loss,
+                    "learning_rate": lr,
+                    "gradient_norm": grad_norm,
+                    "memory_mb": memory_mb,
+                    "weight_norm": weight_norm,
+                    "train_loss": train_loss,
+                    "train_accuracy": train_accuracy,
+                    "train_perplexity": train_perplexity,
                     "val_loss": val_loss,
-                    "train_loss_for_check": train_loss_for_check,
+                    "val_accuracy": val_accuracy,
+                    "val_perplexity": val_perplexity,
                 })
         
         # Checkpointing
-        training_run_name = f"c{args.context_length}-n{args.num_layers}-d{args.d_model}-h{args.num_heads}-b{args.batch_size}-i{args.max_iters}-{args.dataset}"
-        checkpoint_dir = Path(f"results/models/checkpoints/{training_run_name}")
+        checkpoint_dir = Path(f"results/models/checkpoints/{run_name}")
         checkpoint_dir.mkdir(parents=True, exist_ok=True)
         if (iteration + 1) % args.checkpoint_interval == 0 and iteration > 0 and iteration < args.max_iters - 1:
             checkpoint_path = checkpoint_dir / f"iter_{iteration}.pt"
             save_checkpoint(model, optimiser, iteration, checkpoint_path)
             print(f"Saved checkpoint: {checkpoint_path}\n")
-    
+
     # Final checkpoint - save to trained directory
     trained_dir = Path("results/models/trained")
     trained_dir.mkdir(parents=True, exist_ok=True)
-    final_checkpoint_path = trained_dir / f"{training_run_name}.pt"
+    final_checkpoint_path = trained_dir / f"{run_name}.pt"
     save_checkpoint(model, optimiser, iteration, final_checkpoint_path)
     print(f"\nTraining completed! Final checkpoint saved: {final_checkpoint_path}\n")
+
+    if not args.no_wandb:
+        wandb.finish()
 
 
 def train_transformer(args: argparse.Namespace) -> None:
     device = get_device(args.device)
-    print(f"Using device: {device}\n")
-    
-    if not args.no_wandb:
-        training_run_name = f"c{args.context_length}-n{args.num_layers}-d{args.d_model}-h{args.num_heads}-b{args.batch_size}-i{args.max_iters}-{args.dataset}"
-        wandb.init(
-            project=os.getenv("WANDB_PROJECT"),
-            name=training_run_name,
-            config=vars(args),
-        )
+    print(f"Using device: {device}")
     
     print("\nCreating model...")
     if args.d_ff is None:
@@ -370,9 +368,14 @@ def train_transformer(args: argparse.Namespace) -> None:
         d_ff=args.d_ff,
     )
     model = model.to(device)
-    print(f"Created model has {sum(p.numel() for p in model.parameters()):,} parameters")
-    # model = torch.compile(model, mode="max-autotune")
-    # print("Model compiled with torch.compile")
+    num_params = sum(p.numel() for p in model.parameters())
+    print(f"Created model has {num_params:,} parameters")
+    
+    print("Compiling model with torch.compile...")
+    if str(device) == "mps":
+        model = torch.compile(model, backend="aot_eager")
+    else:
+        model = torch.compile(model, mode="max-autotune")
     
     print("\nCreating optimiser...")
     optimiser = AdamW(
@@ -384,20 +387,50 @@ def train_transformer(args: argparse.Namespace) -> None:
     
     print("\nLoading data...")
     train_data_path, val_data_path = get_data_paths(args.dataset)
-    train_data = load_training_data(train_data_path)
-    val_input_tensor, val_target_tensor = get_val_batch(
+    train_data = np.load(train_data_path, mmap_mode='r')
+    print(f"Loaded {train_data.shape[0]:,} training tokens from {train_data_path}")
+    val_data = np.load(val_data_path)
+    val_input_tensor, val_target_tensor = get_batch(
         device=device,
-        val_data_path=val_data_path,
-        val_batch_size=args.val_batch_size,
+        data=val_data,
+        batch_size=args.val_batch_size,
         context_length=args.context_length,
     )
-    
+    print(f"Loaded {val_input_tensor.shape[0]:,} validation input and target sequences of {args.context_length} tokens")
+
     start_iteration = 0
     if args.resume_from:
-        print(f"\nResuming from checkpoint: {args.resume_from}\n")
         start_iteration = load_checkpoint(args.resume_from, model, optimiser)
-        print(f"Resumed from iteration {start_iteration}")
+        print(f"\nResuming from checkpoint at iteration {start_iteration}: {args.resume_from}")
+
+    print("\nInitialising Weights and Biases for training logging...")
+    if not args.no_wandb:
+        training_run_name = (
+            f"v{args.vocab_size}"
+            f"-c{args.context_length}"
+            f"-d{args.d_model}"
+            f"-f{args.d_ff}"
+            f"-l{args.num_layers}"
+            f"-h{args.num_heads}"
+            f"-b{args.batch_size}"
+            f"-i{args.max_iters}"
+            f"-{args.dataset}-{str(device)}"
+        )
+        if args.test_mode == 1:
+            training_run_name += "-test"    
+        config = vars(args).copy()
+        config.update({
+            "device": device,
+            "torch_version": torch.__version__,
+            "model_parameters": num_params,
+        })
+        wandb.init(
+            project=os.getenv("WANDB_PROJECT"),
+            name=training_run_name,
+            config=config,
+        )
     
+    print("\nStarting training loop...\n")
     training_loop(
         device=device,
         model=model,
@@ -405,12 +438,10 @@ def train_transformer(args: argparse.Namespace) -> None:
         train_data=train_data,
         val_input_tensor=val_input_tensor,
         val_target_tensor=val_target_tensor,
+        run_name=training_run_name,
         start_iteration=start_iteration,
         args=args,
     )
-    
-    if not args.no_wandb:
-        wandb.finish()
 
 
 if __name__ == "__main__":

@@ -498,7 +498,7 @@ class MultiheadSelfAttention(nn.Module):
 
         # Create causal mask: (seq_len, seq_len)
         seq_len = x.shape[-2]
-        mask = torch.tril(torch.ones(seq_len, seq_len))
+        mask = torch.tril(torch.ones(seq_len, seq_len, device=x.device))
         
         # Apply scaled dot-product attention with causal mask
         attn_out = scaled_dot_product_attention(Q, K, V, mask)
@@ -519,14 +519,13 @@ class TransformerBlock(nn.Module):
         self,
         d_model: int,
         num_heads: int,
-        d_ff: int,
-        max_seq_len: int,
-        theta: float,
+        d_ff: int = None,
+        max_seq_len: int = 2048,
+        theta: float = 10000.0,
     ):
         super().__init__()
         self.d_model = d_model
         self.num_heads = num_heads
-        self.d_ff = d_ff
         
         # First sublayer: Multi-head self-attention
         self.ln1 = RMSNorm(d_model)
@@ -569,7 +568,8 @@ class TransformerLM(nn.Module):
         d_model: int,
         num_layers: int,
         num_heads: int,
-        d_ff: int,
+        d_ff: int = None,
+        max_seq_len: int = 2048,
         theta: float = 10000.0,
     ):
         super().__init__()
@@ -578,8 +578,6 @@ class TransformerLM(nn.Module):
         self.d_model = d_model
         self.num_layers = num_layers
         self.num_heads = num_heads
-        self.d_ff = d_ff
-        self.theta = theta
         
         # Token embeddings
         self.token_embeddings = Embedding(vocab_size, d_model)
@@ -590,7 +588,7 @@ class TransformerLM(nn.Module):
                 d_model=d_model,
                 num_heads=num_heads,
                 d_ff=d_ff,
-                max_seq_len=context_length,
+                max_seq_len=max_seq_len,
                 theta=theta,
             )
             for _ in range(num_layers)

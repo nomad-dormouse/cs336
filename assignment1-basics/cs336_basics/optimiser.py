@@ -418,13 +418,16 @@ def gradient_clipping(
         return  # no gradients to clip
     
     # Compute total L2 norm: sqrt(sum(grad^2))
-    total_norm = torch.norm(torch.stack([g.norm(2) for g in grads]), 2)
+    grad_norm = torch.sqrt(sum(g.pow(2).sum() for g in grads))
     
      # Compute scaling factor if total_norm > max_norm
-    if total_norm > max_norm:
-        scale = max_norm / (total_norm + eps)
+    if grad_norm > max_norm:
+        scale = max_norm / (grad_norm + eps)
         for g in grads:
             g.mul_(scale)  # scale in-place
+
+    # Return gradient norm before clipping
+    return grad_norm
 
 
 class AdamW(optim.Optimizer):

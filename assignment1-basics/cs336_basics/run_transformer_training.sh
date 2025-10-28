@@ -1,26 +1,32 @@
 #!/bin/bash
+# 7 Experiments
+
+# Problem (experiment_log): Experiment logging (3 points)
+
 
 uv run python -m cs336_basics.train_transformer \
-    --device cpu \
-    --dataset TS \
-    --vocab_size 10000 \
-    --context_length 256 \
-    --num_layers 8 \
-    --d_model 128 \
-    --num_heads 4 \
-    --batch_size 64 \
-    --val_batch_size 256 \
-    --max_iters 1000 \
-    --learning_rate 1e-3 \
-    --min_learning_rate 1e-4 \
-    --warmup_iters 50 \
-    --cosine_cycle_iters 1000 \
-    --weight_decay 0.1 \
-    --beta1 0.9 \
-    --beta2 0.95 \
-    --grad_clip 1.0 \
-    --eval_and_log_interval 10 \
-    --checkpoint_interval 100
+        --test_mode 0 \
+        --device cpu \
+        --dataset TS \
+        --vocab_size 10000 \
+        --context_length 256 \
+        --d_model 512 \
+        --d_ff 1344 \
+        --num_layers 4 \
+        --num_heads 16 \
+        --batch_size 32 \
+        --val_batch_size 256 \
+        --max_iters 5000 \
+        --learning_rate 1e-3 \
+        --min_learning_rate 1e-4 \
+        --warmup_iters 200 \
+        --cosine_cycle_iters 5000 \
+        --weight_decay 0.1 \
+        --beta1 0.9 \
+        --beta2 0.95 \
+        --grad_clip 1.0 \
+        --eval_and_log_interval 50 \
+        --checkpoint_interval 500
 
 if [ $? -eq 0 ]; then
     echo "Script executed successfully!"

@@ -447,7 +447,7 @@ def tokenise_file(
     input_filename = os.path.basename(input_filepath)
     input_name, _ = os.path.splitext(input_filename)
     output_filename = input_name + "_tokenised" + ".npy"
-    output_filepath = os.path.join("results", "tokenised", output_filename)
+    output_filepath = os.path.join("results", "tokeniser", "tokenised_texts", output_filename)
     np.save(output_filepath, token_array)
     
     print(f"Tokenised file:")
@@ -469,20 +469,20 @@ if __name__ == "__main__":
     # merges_filepath = "results/tokeniser/merges_corpus_500.txt"
     # input_filepath = "tests/fixtures/corpus.en"
 
-    # # TS valid with TS tokeniser
-    # vocab_filepath = "results/tokeniser/vocab_TinyStoriesV2-GPT4-valid_10000.json"
-    # merges_filepath = "results/tokeniser/merges_TinyStoriesV2-GPT4-valid_10000.txt"
+    # # TS valid with TS traintokeniser
+    # vocab_filepath = "results/tokeniser/vocab_TinyStoriesV2-GPT4-train_10000.json"
+    # merges_filepath = "results/tokeniser/merges_TinyStoriesV2-GPT4-train_10000.txt"
     # input_filepath = "data/TinyStoriesV2-GPT4-valid.txt"
     
-    # TS train with TS tokeniser
-    vocab_filepath = "results/tokeniser/vocab_TinyStoriesV2-GPT4-train_10000.json"
-    merges_filepath = "results/tokeniser/merges_TinyStoriesV2-GPT4-train_10000.txt"
-    input_filepath = "data/TinyStoriesV2-GPT4-train.txt"
+    # # TS train with TS traintokeniser
+    # vocab_filepath = "results/tokeniser/vocab_TinyStoriesV2-GPT4-train_10000.json"
+    # merges_filepath = "results/tokeniser/merges_TinyStoriesV2-GPT4-train_10000.txt"
+    # input_filepath = "data/TinyStoriesV2-GPT4-train.txt"
 
-    # # OWT valid with OWT tokeniser
-    # vocab_filepath = "results/tokeniser/vocab_owt_valid_32000.json"
-    # merges_filepath = "results/tokeniser/merges_owt_valid_32000.txt"
-    # input_filepath = "data/owt_valid.txt"
+    # OWT valid with OWT tokeniser
+    vocab_filepath = "results/tokeniser/vocab_owt_train_32000.json"
+    merges_filepath = "results/tokeniser/merges_owt_train_32000.txt"
+    input_filepath = "data/owt_valid.txt"
 
     # # OWT train with OWT tokeniser
     # vocab_filepath = "results/tokeniser/vocab_owt_train_32000.json"

@@ -173,5 +173,4 @@ scalene_*.html
 scalene_*.json
 
 # Results
-results/models
-results/tokeniser
+results/
