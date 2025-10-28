@@ -6,7 +6,7 @@
 
 uv run python -m cs336_basics.train_transformer \
         --test_mode 0 \
-        --device cpu \
+        --device auto \
         --dataset TS \
         --vocab_size 10000 \
         --context_length 256 \
