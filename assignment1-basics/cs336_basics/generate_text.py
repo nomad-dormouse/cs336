@@ -45,15 +45,15 @@ def convert_args(args: argparse.Namespace) -> dict:
     model_path = f"results/models/trained/{args.model_filename}.pt"
 
     name = args.model_filename.replace('.pt', '')
-    # Updated pattern to include f (d_ff) and make trailing device optional (ignored)
-    pattern = r'v(\d+)-c(\d+)-d(\d+)-f(\d+)-l(\d+)-h(\d+)-b(\d+)-i(\d+)-(\w+)(?:-(\w+))?(?:-test)?'
+    # Updated pattern to include f (d_ff), r (learning_rate), and make trailing device optional (ignored)
+    pattern = r'v(\d+)-c(\d+)-d(\d+)-f(\d+)-l(\d+)-h(\d+)-b(\d+)-r([\d.e-]+)-i(\d+)-(\w+)(?:-(\w+))?(?:-test)?'
     match = re.match(pattern, name)
     if not match:
         raise ValueError(
             f"Invalid model filename format: {args.model_filename}. Expected format: "
-            f"v{vocab_size}-c{context_length}-d{d_model}-f{d_ff}-l{num_layers}-h{num_heads}-b{batch_size}-i{max_iters}-{dataset}[-device][-test]"
+            f"v{vocab_size}-c{context_length}-d{d_model}-f{d_ff}-l{num_layers}-h{num_heads}-b{batch_size}-r{learning_rate}-i{max_iters}-{dataset}[-device][-test]"
         )
-    vocab_size, context_length, d_model, d_ff, num_layers, num_heads, batch_size, max_iters, dataset, _ignored_device = match.groups()
+    vocab_size, context_length, d_model, d_ff, num_layers, num_heads, batch_size, learning_rate, max_iters, dataset, _ignored_device = match.groups()
 
     if dataset == "TS":
         vocab_size = 10000

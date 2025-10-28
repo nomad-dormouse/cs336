@@ -416,6 +416,7 @@ def train_transformer(args: argparse.Namespace) -> None:
             f"-l{args.num_layers}"
             f"-h{args.num_heads}"
             f"-b{args.batch_size}"
+            f"-r{args.learning_rate}"
             f"-i{args.max_iters}"
             f"-{args.dataset}-{str(device)}"
         )
@@ -431,6 +432,7 @@ def train_transformer(args: argparse.Namespace) -> None:
             project=args.wandb_project,
             name=training_run_name,
             config=config,
+            dir=os.getenv("WANDB_DIR"),
         )
     
     print("\nStarting training loop...\n")
