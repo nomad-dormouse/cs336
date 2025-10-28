@@ -64,7 +64,5 @@ parameters:
     value: 10
   checkpoint_interval:
     value: 100
-  no_wandb:
-    value: false
   wandb_project:
     value: cs336-assignment1-sweep-lr

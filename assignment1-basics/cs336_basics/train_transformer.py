@@ -69,7 +69,6 @@ def parse_args():
     parser.add_argument("--eval_and_log_interval", type=int, default=10, help="Evaluate on validation batch and log metrics every N iterations")
     parser.add_argument("--checkpoint_interval", type=int, default=200, help="Save checkpoint every N iterations")
     parser.add_argument("--resume_from", type=str, default=None, help="Path to checkpoint to resume from")
-    parser.add_argument("--no_wandb", action="store_true", help="Disable Weights and Biases logging")
     parser.add_argument("--test_mode", type=int, default=0, help="Test mode: overfit to a single batch (0 = off, 1 = on)")
     
     return parser.parse_args()
@@ -318,23 +317,21 @@ def training_loop(
                 val_target_tensor,
             )
             
+            wandb.log({
+                "iteration": iteration,
+                "elapsed_time": elapsed_time,
+                "learning_rate": lr,
+                "gradient_norm": grad_norm,
+                "memory_mb": memory_mb,
+                "weight_norm": weight_norm,
+                "train_loss": train_loss,
+                "train_accuracy": train_accuracy,
+                "train_perplexity": train_perplexity,
+                "val_loss": val_loss,
+                "val_accuracy": val_accuracy,
+                "val_perplexity": val_perplexity,
+            })
             print(f"Iter {iteration:6d} | Train loss: {train_loss:.4f} | Val loss: {val_loss:.4f}\n")
-            
-            if not args.no_wandb:
-                wandb.log({
-                    "iteration": iteration,
-                    "elapsed_time": elapsed_time,
-                    "learning_rate": lr,
-                    "gradient_norm": grad_norm,
-                    "memory_mb": memory_mb,
-                    "weight_norm": weight_norm,
-                    "train_loss": train_loss,
-                    "train_accuracy": train_accuracy,
-                    "train_perplexity": train_perplexity,
-                    "val_loss": val_loss,
-                    "val_accuracy": val_accuracy,
-                    "val_perplexity": val_perplexity,
-                })
         
         # Checkpointing
         checkpoint_dir = Path(f"results/models/checkpoints/{run_name}")
@@ -351,8 +348,7 @@ def training_loop(
     save_checkpoint(model, optimiser, iteration, final_checkpoint_path)
     print(f"\nTraining completed! Final checkpoint saved: {final_checkpoint_path}\n")
 
-    if not args.no_wandb:
-        wandb.finish()
+    wandb.finish()
 
 
 def train_transformer(args: argparse.Namespace) -> None:
@@ -407,33 +403,32 @@ def train_transformer(args: argparse.Namespace) -> None:
         print(f"\nResuming from checkpoint at iteration {start_iteration}: {args.resume_from}")
 
     print("\nInitialising Weights and Biases for training logging...")
-    if not args.no_wandb:
-        training_run_name = (
-            f"v{args.vocab_size}"
-            f"-c{args.context_length}"
-            f"-d{args.d_model}"
-            f"-f{args.d_ff}"
-            f"-l{args.num_layers}"
-            f"-h{args.num_heads}"
-            f"-b{args.batch_size}"
-            f"-r{args.learning_rate}"
-            f"-i{args.max_iters}"
-            f"-{args.dataset}-{str(device)}"
-        )
-        if args.test_mode == 1:
-            training_run_name += "-test"
-        config = vars(args).copy()
-        config.update({
-            "device": device,
-            "torch_version": torch.__version__,
-            "model_parameters": num_params,
-        })
-        wandb.init(
-            project=args.wandb_project,
-            name=training_run_name,
-            config=config,
-            dir=os.getenv("WANDB_DIR"),
-        )
+    training_run_name = (
+        f"v{args.vocab_size}"
+        f"-c{args.context_length}"
+        f"-d{args.d_model}"
+        f"-f{args.d_ff}"
+        f"-l{args.num_layers}"
+        f"-h{args.num_heads}"
+        f"-b{args.batch_size}"
+        f"-r{args.learning_rate}"
+        f"-i{args.max_iters}"
+        f"-{args.dataset}-{str(device)}"
+    )
+    if args.test_mode == 1:
+        training_run_name += "-test"
+    config = vars(args).copy()
+    config.update({
+        "device": device,
+        "torch_version": torch.__version__,
+        "model_parameters": num_params,
+    })
+    wandb.init(
+        project=args.wandb_project,
+        name=training_run_name,
+        config=config,
+        dir=os.getenv("WANDB_DIR"),
+    )
     
     print("\nStarting training loop...\n")
     training_loop(
