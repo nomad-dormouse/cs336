@@ -1,10 +1,10 @@
 #!/bin/bash
 
 uv run python -m cs336_basics.generate_text \
-    --device mps \
+    --device cpu \
     --model_filename "v10000-c256-d512-f1344-l4-h16-b32-i5000-TS-cpu" \
     --prompt "Once upon a time" \
-    --max_tokens 256 \
+    --max_tokens 512 \
     --temperature 0.7 \
     --top_p 0.9
 

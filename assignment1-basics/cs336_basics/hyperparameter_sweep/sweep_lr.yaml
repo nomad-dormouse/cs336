@@ -53,9 +53,9 @@ parameters:
   
   # Logging
   eval_and_log_interval:
-    value: 50
+    value: 10
   checkpoint_interval:
-    value: 200
+    value: 100
   no_wandb:
     value: false
   wandb_project:
