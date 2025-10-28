@@ -5,7 +5,6 @@
 
 
 uv run python -m cs336_basics.train_transformer \
-        --wandb_project "cs336-assignment1" \
         --test_mode 0 \
         --device cpu \
         --dataset TS \
@@ -18,16 +17,17 @@ uv run python -m cs336_basics.train_transformer \
         --batch_size 32 \
         --val_batch_size 256 \
         --max_iters 5000 \
-        --learning_rate 1e-3 \
-        --min_learning_rate 1e-4 \
         --warmup_iters 200 \
         --cosine_cycle_iters 5000 \
-        --weight_decay 0.1 \
+        --learning_rate 1e-3 \
+        --min_learning_rate 1e-4 \
         --beta1 0.9 \
         --beta2 0.95 \
         --grad_clip 1.0 \
+        --weight_decay 0.1 \
         --eval_and_log_interval 50 \
         --checkpoint_interval 500
+        --wandb_project "cs336-assignment1" \
 
 if [ $? -eq 0 ]; then
     echo "Script executed successfully!"
