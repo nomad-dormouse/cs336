@@ -57,7 +57,6 @@ def parse_args():
     parser.add_argument("--val_batch_size", type=int, default=256, help="Validation batch size")
     parser.add_argument("--max_iters", type=int, default=1000, help="Maximum number of training iterations")
     parser.add_argument("--learning_rate", type=float, default=1e-4, help="Maximum learning rate")
-    parser.add_argument("--min_learning_rate", type=float, default=1e-5, help="Minimum learning rate")
     parser.add_argument("--warmup_iters", type=int, default=100, help="Number of warmup iterations")
     parser.add_argument("--cosine_cycle_iters", type=int, default=1000, help="Number of cosine annealing iterations")
     parser.add_argument("--weight_decay", type=float, default=0.1, help="Weight decay")
@@ -273,7 +272,7 @@ def training_loop(
         lr = get_lr_cosine_schedule(
             iteration,
             args.learning_rate,
-            args.min_learning_rate,
+            args.learning_rate / 10,
             args.warmup_iters,
             args.cosine_cycle_iters,
         )

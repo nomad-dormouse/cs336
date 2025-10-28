@@ -14,8 +14,6 @@ parameters:
   # Learning rate sweep
   learning_rate:
     values: [3e-4, 1e-3, 3e-3, 1e-2, 3e-2, 1e-1]
-  min_learning_rate:
-    values: [3e-5, 1e-4, 3e-4, 1e-3, 3e-3, 1e-2]
   
   # Required arguments
   test_mode:

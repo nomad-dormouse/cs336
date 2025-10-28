@@ -20,7 +20,6 @@ uv run python -m cs336_basics.train_transformer \
         --warmup_iters 10 \
         --cosine_cycle_iters 100 \
         --learning_rate 1e-3 \
-        --min_learning_rate 1e-4 \
         --beta1 0.9 \
         --beta2 0.95 \
         --grad_clip 1.0 \
