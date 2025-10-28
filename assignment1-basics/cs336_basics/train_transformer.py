@@ -35,6 +35,9 @@ load_dotenv()
 def parse_args():
     parser = argparse.ArgumentParser(description="Train a Transformer Language Model")
     
+    # Weights & Biases project name
+    parser.add_argument("--wandb_project", type=str, default="cs336-assignment1", help="Weights & Biases project name")
+
     # Device
     parser.add_argument("--device", type=str, default="auto", help="Device to use (auto, cpu, cuda, mps)")
 
@@ -417,7 +420,7 @@ def train_transformer(args: argparse.Namespace) -> None:
             f"-{args.dataset}-{str(device)}"
         )
         if args.test_mode == 1:
-            training_run_name += "-test"    
+            training_run_name += "-test"
         config = vars(args).copy()
         config.update({
             "device": device,
@@ -425,7 +428,7 @@ def train_transformer(args: argparse.Namespace) -> None:
             "model_parameters": num_params,
         })
         wandb.init(
-            project=os.getenv("WANDB_PROJECT"),
+            project=args.wandb_project,
             name=training_run_name,
             config=config,
         )

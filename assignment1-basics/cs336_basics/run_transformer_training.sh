@@ -5,6 +5,7 @@
 
 
 uv run python -m cs336_basics.train_transformer \
+        --wandb_project "cs336-assignment1" \
         --test_mode 0 \
         --device cpu \
         --dataset TS \
