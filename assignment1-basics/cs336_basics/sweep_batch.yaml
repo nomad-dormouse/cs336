@@ -3,7 +3,7 @@
 # Problem (batch_size_experiment): Batch size variations (1 point) (2 H100 hrs)
 
 
-project: cs336-assignment1-sweep-batch
+project: cs336-assignment1
 entity: not-mad-dormouse
 program: cs336_basics/train_transformer.py
 
@@ -64,4 +64,4 @@ parameters:
   checkpoint_interval:
     value: 100
   wandb_project:
-    value: cs336-assignment1-sweep-batch
+    value: cs336-assignment1
