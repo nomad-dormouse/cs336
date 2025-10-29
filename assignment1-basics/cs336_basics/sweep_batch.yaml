@@ -1,0 +1,67 @@
+# 7 Experiments
+
+# Problem (batch_size_experiment): Batch size variations (1 point) (2 H100 hrs)
+
+
+project: cs336-assignment1-sweep-batch
+entity: not-mad-dormouse
+program: cs336_basics/train_transformer.py
+
+method: grid
+metric:
+  name: val_loss
+  goal: minimize
+parameters:
+  # Batch size sweep
+  batch_size:
+    values: [1, 4, 8, 16, 32, 64, 128, 256]
+  
+  # Required arguments
+  test_mode:
+    value: 0
+  device:
+    value: auto
+  dataset:
+    value: TS
+  
+  # Model architecture
+  vocab_size:
+    value: 10000
+  context_length:
+    value: 256
+  d_model:
+    value: 512
+  d_ff:
+    value: 1344
+  num_layers:
+    value: 4
+  num_heads:
+    value: 16
+  
+  # Training hyperparameters
+  val_batch_size:
+    value: 256
+  learning_rate:
+    value: 1e-3
+  max_iters:
+    value: 300
+  warmup_iters:
+    value: 20
+  cosine_cycle_iters:
+    value: 300
+  beta1:
+    value: 0.9
+  beta2:
+    value: 0.95
+  grad_clip:
+    value: 1.0
+  weight_decay:
+    value: 0.1
+  
+  # Logging
+  eval_and_log_interval:
+    value: 10
+  checkpoint_interval:
+    value: 100
+  wandb_project:
+    value: cs336-assignment1-sweep-batch

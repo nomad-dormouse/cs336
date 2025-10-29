@@ -1,4 +1,8 @@
 #!/bin/bash
+# 7 Experiments
+
+# Problem (generate): Generate text (1 point)
+
 
 uv run python -m cs336_basics.generate_text \
     --device cpu \
