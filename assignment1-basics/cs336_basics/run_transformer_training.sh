@@ -5,7 +5,7 @@
 
 
 uv run python -m cs336_basics.train_transformer \
-        --device autoo \
+        --device auto \
         --batch_size 32 \
         --max_iters 5000 \
         --learning_rate 1e-3 \
