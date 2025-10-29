@@ -35,40 +35,35 @@ load_dotenv()
 def parse_args():
     parser = argparse.ArgumentParser(description="Train a Transformer Language Model")
     
-    # Weights & Biases project name
-    parser.add_argument("--wandb_project", type=str, default="cs336-assignment1", help="Weights & Biases project name")
-
-    # Device
+    parser.add_argument("--test_mode", type=int, default=0, help="Test mode: overfit to a single batch (0 = off, 1 = on)")
     parser.add_argument("--device", type=str, default="auto", help="Device to use (auto, cpu, cuda, mps)")
-
-    # Data
     parser.add_argument("--dataset", type=str, default="TS", help="Name of the dataset to train on (TS or OWT)")
     
     # Model
     parser.add_argument("--vocab_size", type=int, default=10000, help="Vocabulary size")
     parser.add_argument("--context_length", type=int, default=256, help="Context length")
-    parser.add_argument("--num_layers", type=int, default=8, help="Number of transformer layers")
-    parser.add_argument("--d_model", type=int, default=256, help="Model dimension")
-    parser.add_argument("--num_heads", type=int, default=8, help="Number of attention heads")
-    parser.add_argument("--d_ff", type=int, default=None, help="Feed-forward dimension")
+    parser.add_argument("--d_model", type=int, default=512, help="Model dimension")
+    parser.add_argument("--d_ff", type=int, default=1344, help="Feed-forward dimension")
+    parser.add_argument("--num_layers", type=int, default=4, help="Number of transformer layers")
+    parser.add_argument("--num_heads", type=int, default=16, help="Number of attention heads")
     
     # Training
     parser.add_argument("--batch_size", type=int, default=32, help="Batch size")
     parser.add_argument("--val_batch_size", type=int, default=256, help="Validation batch size")
-    parser.add_argument("--max_iters", type=int, default=1000, help="Maximum number of training iterations")
-    parser.add_argument("--learning_rate", type=float, default=1e-4, help="Maximum learning rate")
-    parser.add_argument("--warmup_iters", type=int, default=100, help="Number of warmup iterations")
-    parser.add_argument("--cosine_cycle_iters", type=int, default=1000, help="Number of cosine annealing iterations")
-    parser.add_argument("--weight_decay", type=float, default=0.1, help="Weight decay")
+    parser.add_argument("--max_iters", type=int, default=None, help="Maximum number of training iterations (omit to auto-compute)")
+    parser.add_argument("--warmup_iters", type=int, default=None, help="Number of warmup iterations (omit to auto-compute)")
+    parser.add_argument("--cosine_cycle_iters", type=int, default=None, help="Number of cosine annealing iterations (omit to auto-compute)")
+    parser.add_argument("--learning_rate", type=float, default=1e-3, help="Maximum learning rate")
     parser.add_argument("--beta1", type=float, default=0.9, help="Adam beta1")
     parser.add_argument("--beta2", type=float, default=0.95, help="Adam beta2")
     parser.add_argument("--grad_clip", type=float, default=1.0, help="Gradient clipping threshold")
+    parser.add_argument("--weight_decay", type=float, default=0.1, help="Weight decay")
     
     # Checkpointing and logging
-    parser.add_argument("--eval_and_log_interval", type=int, default=10, help="Evaluate on validation batch and log metrics every N iterations")
-    parser.add_argument("--checkpoint_interval", type=int, default=200, help="Save checkpoint every N iterations")
+    parser.add_argument("--eval_and_log_interval", type=int, default=None, help="Evaluate on validation batch and log metrics every N iterations (omit to log every iteration)")
+    parser.add_argument("--checkpoint_interval", type=int, default=None, help="Save checkpoint every N iterations (omit to save only final model)")
     parser.add_argument("--resume_from", type=str, default=None, help="Path to checkpoint to resume from")
-    parser.add_argument("--test_mode", type=int, default=0, help="Test mode: overfit to a single batch (0 = off, 1 = on)")
+    parser.add_argument("--wandb_project", type=str, default="cs336-assignment1", help="Weights & Biases project name")
     
     return parser.parse_args()
 
@@ -96,8 +91,8 @@ def calculate_training_parameters(
     memory = (4 * params + activations) * precision_in_bytes / (1024**3)
     print(f"{args.context_length} context / {args.batch_size} batch: {memory:.3f} GB")
 
-    tokens = args.max_iters * args.batch_size * args.context_length
-    print(f"{args.max_iters} iters: {tokens:,} tokens\n")
+    train_tokens = args.max_iters * args.batch_size * args.context_length
+    print(f"{args.max_iters} iters: {train_tokens:,} tokens\n")
 
 
 def get_data_paths(dataset: str) -> tuple[str, str]:
@@ -206,15 +201,9 @@ def evaluate_model(
         # Weight norm (L2 norm of all trainable parameters)
         weight_norm = sum(p.pow(2).sum() for p in model.parameters() if p.requires_grad).sqrt()
         
-        # Memory usage in MB (GPU if CUDA, else CPU RSS)
-        if str(device) == "cuda":
-            memory_mb = torch.cuda.memory_allocated() / 1024 / 1024
-        else:
-            memory_mb = psutil.Process().memory_info().rss / 1024 / 1024
-        
     model.train()
 
-    return loss.item(), accuracy.item(), perplexity.item(), weight_norm.item(), memory_mb
+    return loss.item(), accuracy.item(), perplexity.item(), weight_norm.item()
 
 
 def save_checkpoint(
@@ -307,6 +296,15 @@ def training_loop(
         if (iteration + 1) % args.eval_and_log_interval == 0 and iteration > 0:
             elapsed_time = time.time() - start_time
 
+            # Tokens model trained on so far
+            train_tokens = (iteration + 1) * args.batch_size * args.context_length
+
+            # Memory usage in MB (GPU if CUDA, else CPU RSS)
+            if str(device) == "cuda":
+                memory_mb = torch.cuda.memory_allocated() / 1024 / 1024
+            else:
+                memory_mb = psutil.Process().memory_info().rss / 1024 / 1024
+
             # Training metrics
             train_preds = train_logits.argmax(dim=-1)
             train_accuracy = (train_preds == train_target_tensor).float().mean().item()
@@ -314,7 +312,7 @@ def training_loop(
             train_perplexity = math.exp(train_loss)
             
             # Validation metrics
-            val_loss, val_accuracy, val_perplexity, weight_norm, memory_mb = evaluate_model(
+            val_loss, val_accuracy, val_perplexity, weight_norm = evaluate_model(
                 device,
                 model,
                 val_input_tensor,
@@ -322,28 +320,30 @@ def training_loop(
             )
             
             wandb.log({
-                "iteration": iteration,
-                "elapsed_time": elapsed_time,
-                "learning_rate": lr,
-                "gradient_norm": grad_norm,
-                "memory_mb": memory_mb,
-                "weight_norm": weight_norm,
                 "train_loss": train_loss,
                 "train_accuracy": train_accuracy,
                 "train_perplexity": train_perplexity,
                 "val_loss": val_loss,
                 "val_accuracy": val_accuracy,
                 "val_perplexity": val_perplexity,
+                "learning_rate": lr,
+                "gradient_norm": grad_norm,
+                "weight_norm": weight_norm,
+                "train_tokens": train_tokens,
+                "memory_mb": memory_mb,
+                "elapsed_time": elapsed_time,
+                "iteration": iteration,
             })
             print(f"Iter {iteration:6d} | Train loss: {train_loss:.4f} | Val loss: {val_loss:.4f}\n")
         
-        # Checkpointing
-        checkpoint_dir = Path(f"results/models/checkpoints/{run_name}")
-        checkpoint_dir.mkdir(parents=True, exist_ok=True)
-        if (iteration + 1) % args.checkpoint_interval == 0 and iteration > 0 and iteration < args.max_iters - 1:
-            checkpoint_path = checkpoint_dir / f"iter_{iteration}.pt"
-            save_checkpoint(model, optimiser, iteration, checkpoint_path)
-            print(f"Saved checkpoint: {checkpoint_path}\n")
+        # Checkpointing (only if interval is provided)
+        if args.checkpoint_interval:
+            checkpoint_dir = Path(f"results/models/checkpoints/{run_name}")
+            checkpoint_dir.mkdir(parents=True, exist_ok=True)
+            if (iteration + 1) % args.checkpoint_interval == 0 and iteration > 0 and iteration < args.max_iters - 1:
+                checkpoint_path = checkpoint_dir / f"iter_{iteration}.pt"
+                save_checkpoint(model, optimiser, iteration, checkpoint_path)
+                print(f"Saved checkpoint: {checkpoint_path}\n")
 
     # Final checkpoint - save to trained directory
     trained_dir = Path("results/models/trained")
@@ -360,6 +360,26 @@ def training_loop(
 
 
 def train_transformer(args: argparse.Namespace) -> None:
+    # Auto-compute max_iters if not provided
+    # Target training tokens = 300 iters with 32 batch size and 256 context length
+    if args.max_iters is None:
+        target_total_tokens = 300 * 32 * 256
+        tokens_per_iter = args.batch_size * args.context_length
+        args.max_iters = math.ceil(target_total_tokens / tokens_per_iter)
+        print(f"\nNumber of iterations to train on targer amount of tokens: {args.max_iters}")
+
+    if args.cosine_cycle_iters is None:
+        args.cosine_cycle_iters = args.max_iters
+
+    if args.warmup_iters is None:
+        args.warmup_iters = args.max_iters // 20
+
+    if args.eval_and_log_interval is None:
+        args.eval_and_log_interval = args.max_iters // 100
+
+    
+    calculate_training_parameters(args)
+    
     device = get_device(args.device)
     print(f"Using device: {device}")
     
@@ -454,5 +474,4 @@ def train_transformer(args: argparse.Namespace) -> None:
 
 if __name__ == "__main__":
     args = parse_args()
-    calculate_training_parameters(args)
     train_transformer(args)

@@ -1,0 +1,21 @@
+# 7 Experiments
+
+# Problem (batch_size_experiment): Batch size variations (1 point) (2 H100 hrs)
+
+
+entity: not-mad-dormouse
+project: cs336-assignment1
+name: batch-1to512-no-data-adjustment
+program: cs336_basics/train_transformer.py
+
+method: grid
+metric:
+  name: val_loss
+  goal: minimize
+parameters:
+  # Batch size sweep
+  batch_size:
+    values: [1, 2, 4, 8, 16, 32, 64, 128, 256, 512]
+  
+  learning_rate:
+    value: 1e-3

@@ -3,8 +3,9 @@
 # Problem (batch_size_experiment): Batch size variations (1 point) (2 H100 hrs)
 
 
-project: cs336-assignment1
 entity: not-mad-dormouse
+project: cs336-assignment1
+name: batch-1to512-with-data-adjustment
 program: cs336_basics/train_transformer.py
 
 method: grid
@@ -43,12 +44,6 @@ parameters:
     value: 256
   learning_rate:
     value: 1e-3
-  max_iters:
-    value: 300
-  warmup_iters:
-    value: 20
-  cosine_cycle_iters:
-    value: 300
   beta1:
     value: 0.9
   beta2:
@@ -61,7 +56,5 @@ parameters:
   # Logging
   eval_and_log_interval:
     value: 10
-  checkpoint_interval:
-    value: 150
   wandb_project:
     value: cs336-assignment1
