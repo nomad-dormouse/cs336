@@ -179,7 +179,6 @@ def train_step(
 
 
 def evaluate_model(
-    device: str,
     model: nn.Module,
     input_tensor: Int[Tensor, "batch_size context_length"],
     target_tensor: Int[Tensor, "batch_size context_length"],
@@ -313,7 +312,6 @@ def training_loop(
             
             # Validation metrics
             val_loss, val_accuracy, val_perplexity, weight_norm = evaluate_model(
-                device,
                 model,
                 val_input_tensor,
                 val_target_tensor,
