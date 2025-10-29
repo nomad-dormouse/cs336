@@ -62,6 +62,6 @@ parameters:
   eval_and_log_interval:
     value: 10
   checkpoint_interval:
-    value: 100
+    value: 150
   wandb_project:
     value: cs336-assignment1
