@@ -184,6 +184,7 @@ def train_step(
 
 
 def evaluate_model(
+    device: str,
     model: nn.Module,
     input_tensor: Int[Tensor, "batch_size context_length"],
     target_tensor: Int[Tensor, "batch_size context_length"],
@@ -205,8 +206,11 @@ def evaluate_model(
         # Weight norm (L2 norm of all trainable parameters)
         weight_norm = sum(p.pow(2).sum() for p in model.parameters() if p.requires_grad).sqrt()
         
-        # Memory usage (RSS in MB)
-        memory_mb = psutil.Process().memory_info().rss / 1024 / 1024
+        # Memory usage in MB (GPU if CUDA, else CPU RSS)
+        if str(device) == "cuda":
+            memory_mb = torch.cuda.memory_allocated() / 1024 / 1024
+        else:
+            memory_mb = psutil.Process().memory_info().rss / 1024 / 1024
         
     model.train()
 
@@ -311,6 +315,7 @@ def training_loop(
             
             # Validation metrics
             val_loss, val_accuracy, val_perplexity, weight_norm, memory_mb = evaluate_model(
+                device,
                 model,
                 val_input_tensor,
                 val_target_tensor,
@@ -346,6 +351,10 @@ def training_loop(
     final_checkpoint_path = trained_dir / f"{run_name}.pt"
     save_checkpoint(model, optimiser, iteration, final_checkpoint_path)
     print(f"\nTraining completed! Final checkpoint saved: {final_checkpoint_path}\n")
+    
+    # Clean up CUDA cache if using CUDA
+    if str(device) == "cuda":
+        torch.cuda.empty_cache()
 
     wandb.finish()
 

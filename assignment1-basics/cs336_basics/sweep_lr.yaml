@@ -14,7 +14,7 @@ metric:
 parameters:
   # Learning rate sweep
   learning_rate:
-    values: [3e-4, 1e-3, 3e-3, 1e-2, 3e-2, 1e-1]
+    values: [1e-4, 3e-4, 1e-3, 3e-3, 1e-2, 3e-2, 1e-1, 3e-1, 1]
   
   # Required arguments
   test_mode:
