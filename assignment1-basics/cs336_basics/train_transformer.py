@@ -5,7 +5,7 @@
 # Problem (training_together): Put it together (4 points)
 
 
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 import argparse
 from typing import Union, BinaryIO, IO
 from jaxtyping import Int
@@ -29,41 +29,46 @@ from cs336_basics.optimiser import (
 )
 
 
-load_dotenv()
+load_dotenv(find_dotenv())
+
+
+def get_default(name: str) -> str:
+    return os.getenv(f'{name.upper()}_DEFAULT')
 
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Train a Transformer Language Model")
     
-    parser.add_argument("--test_mode", type=int, default=0, help="Test mode: overfit to a single batch (0 = off, 1 = on)")
-    parser.add_argument("--device", type=str, default="auto", help="Device to use (auto, cpu, cuda, mps)")
-    parser.add_argument("--dataset", type=str, default="TS", help="Name of the dataset to train on (TS or OWT)")
+    parser.add_argument("--test_mode", type=int, default=int(get_default("test_mode")), help="Test mode: overfit to a single batch (0 = off, 1 = on)")
+    parser.add_argument("--device", type=str, default=get_default("device"), help="Device to use (auto, cpu, cuda, mps)")
+    parser.add_argument("--compile", type=int, default=int(get_default("compile")), help="Compile model with torch.compile (0 = off, 1 = on)")
+    parser.add_argument("--dataset", type=str, default=get_default("dataset"), help="Name of the dataset to train on (TS or OWT)")
     
     # Model
-    parser.add_argument("--vocab_size", type=int, default=10000, help="Vocabulary size")
-    parser.add_argument("--context_length", type=int, default=256, help="Context length")
-    parser.add_argument("--d_model", type=int, default=512, help="Model dimension")
-    parser.add_argument("--d_ff", type=int, default=1344, help="Feed-forward dimension")
-    parser.add_argument("--num_layers", type=int, default=4, help="Number of transformer layers")
-    parser.add_argument("--num_heads", type=int, default=16, help="Number of attention heads")
+    parser.add_argument("--vocab_size", type=int, default=int(get_default("vocab_size")), help="Vocabulary size")
+    parser.add_argument("--context_length", type=int, default=get_default("context_length"), help="Context length")
+    parser.add_argument("--d_model", type=int, default=int(get_default("d_model")), help="Model dimension")
+    parser.add_argument("--d_ff", type=int, default=int(get_default("d_ff")), help="Feed-forward dimension")
+    parser.add_argument("--num_layers", type=int, default=int(get_default("num_layers")), help="Number of transformer layers")
+    parser.add_argument("--num_heads", type=int, default=int(get_default("num_heads")), help="Number of attention heads")
     
     # Training
-    parser.add_argument("--batch_size", type=int, default=32, help="Batch size")
-    parser.add_argument("--val_batch_size", type=int, default=128, help="Validation batch size")
-    parser.add_argument("--max_iters", type=int, default=None, help="Maximum number of training iterations (omit to auto-compute)")
+    parser.add_argument("--batch_size", type=int, default=int(get_default("batch_size")), help="Batch size")
+    parser.add_argument("--val_batch_size", type=int, default=int(get_default("val_batch_size")), help="Validation batch size")
+    parser.add_argument("--max_iters", type=int, default=int(get_default("max_iters")), help="Maximum number of training iterations (omit to auto-compute)")
     parser.add_argument("--warmup_iters", type=int, default=None, help="Number of warmup iterations (omit to auto-compute)")
     parser.add_argument("--cosine_cycle_iters", type=int, default=None, help="Number of cosine annealing iterations (omit to auto-compute)")
-    parser.add_argument("--learning_rate", type=float, default=1e-3, help="Maximum learning rate")
-    parser.add_argument("--beta1", type=float, default=0.9, help="Adam beta1")
-    parser.add_argument("--beta2", type=float, default=0.95, help="Adam beta2")
-    parser.add_argument("--grad_clip", type=float, default=1.0, help="Gradient clipping threshold")
-    parser.add_argument("--weight_decay", type=float, default=0.1, help="Weight decay")
+    parser.add_argument("--learning_rate", type=float, default=float(get_default("learning_rate")), help="Maximum learning rate")
+    parser.add_argument("--beta1", type=float, default=float(get_default("beta1")), help="Adam beta1")
+    parser.add_argument("--beta2", type=float, default=float(get_default("beta2")), help="Adam beta2")
+    parser.add_argument("--grad_clip", type=float, default=float(get_default("grad_clip")), help="Gradient clipping threshold")
+    parser.add_argument("--weight_decay", type=float, default=float(get_default("weight_decay")), help="Weight decay")
     
     # Checkpointing and logging
     parser.add_argument("--eval_and_log_interval", type=int, default=None, help="Evaluate on validation batch and log metrics every N iterations (omit to log every iteration)")
     parser.add_argument("--checkpoint_interval", type=int, default=None, help="Save checkpoint every N iterations (omit to save only final model)")
     parser.add_argument("--resume_from", type=str, default=None, help="Path to checkpoint to resume from")
-    parser.add_argument("--wandb_project", type=str, default="cs336-assignment1", help="Weights & Biases project name")
+    parser.add_argument("--wandb_project", type=str, default=get_default("wandb_project"), help="Weights & Biases project name")
     
     return parser.parse_args()
 
@@ -401,11 +406,12 @@ def train_transformer(args: argparse.Namespace) -> None:
     num_params = sum(p.numel() for p in model.parameters())
     print(f"Created model has {num_params:,} parameters")
     
-    print("Compiling model with torch.compile...")
-    if str(device) == "mps":
-        model = torch.compile(model, backend="aot_eager")
-    else:
-        model = torch.compile(model, mode="max-autotune")
+    if args.compile == 1:
+        print("Compiling model with torch.compile...")
+        if str(device) == "mps":
+            model = torch.compile(model, backend="aot_eager")
+        else:
+            model = torch.compile(model, mode="max-autotune")
     
     print("\nCreating optimiser...")
     optimiser = AdamW(

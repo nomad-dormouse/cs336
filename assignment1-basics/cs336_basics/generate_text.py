@@ -3,7 +3,7 @@
 # Problem (decoding): Decoding (3 points)
 
 
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 import argparse
 import re
 import torch
@@ -15,26 +15,21 @@ from tqdm import tqdm
 from cs336_basics.tokeniser import Tokenizer
 from cs336_basics.transformer import softmax
 from cs336_basics.transformer import TransformerLM
-from cs336_basics.train_transformer import get_device
+from cs336_basics.train_transformer import get_default, get_device
 
 
-load_dotenv()
+load_dotenv(find_dotenv())
 
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Generate text from a trained language model")
     
-    # Device
-    parser.add_argument("--device", type=str, default="cpu", help="Device to use (auto, cpu, cuda, mps)")
-
-    # Model
+    parser.add_argument("--device", type=str, default=get_default("device"), help="Device to use (auto, cpu, cuda, mps)")
     parser.add_argument("--model_filename", type=str, required=True, help="Name of the file that contains the model")
-    
-    # Generation
-    parser.add_argument("--prompt", type=str, default="Once upon a time", help="Input prompt")
-    parser.add_argument("--max_tokens", type=int, default=100, help="Maximum tokens to generate")
-    parser.add_argument("--temperature", type=float, default=0.0, help="Sampling temperature")
-    parser.add_argument("--top_p", type=float, default=0.9, help="Top-p sampling threshold")
+    parser.add_argument("--prompt", type=str, default=get_default("prompt"), help="Input prompt")
+    parser.add_argument("--max_tokens", type=int, default=int(get_default("max_tokens")), help="Maximum tokens to generate")
+    parser.add_argument("--temperature", type=float, default=float(get_default("temperature")), help="Sampling temperature")
+    parser.add_argument("--top_p", type=float, default=float(get_default("top_p")), help="Top-p sampling threshold")
     
     return parser.parse_args()
 
@@ -42,7 +37,7 @@ def parse_args():
 def convert_args(args: argparse.Namespace) -> dict:
     device = get_device(args.device)
     
-    model_path = f"results/models/trained/{args.model_filename}.pt"
+    model_path = f"results/models/trained/best/{args.model_filename}.pt"
 
     name = args.model_filename.replace('.pt', '')
     # Updated pattern to include f (d_ff), r (learning_rate), and make trailing device optional (ignored)

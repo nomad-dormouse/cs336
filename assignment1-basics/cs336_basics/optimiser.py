@@ -8,7 +8,7 @@
 # Problem (gradient_clipping): Implement gradient clipping (1 point)
 
 
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 import torch
 from torch import Tensor, nn, optim
 from jaxtyping import Float, Int
@@ -16,11 +16,9 @@ from typing import Iterable, Optional, Callable, Union, BinaryIO, IO
 import json
 import math
 import numpy as np
-import os
 
 
-# Load environment variables
-load_dotenv()
+load_dotenv(find_dotenv())
 
 
 def toy_example(

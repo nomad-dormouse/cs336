@@ -5,7 +5,7 @@
 # Problem (tokenizer_experiments): Experiments with tokenizers (4 points)
 
 
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 import os
 from typing import Iterable, Iterator
 import regex as re
@@ -22,8 +22,7 @@ except ImportError:
     from .train_tokeniser import find_chunk_boundaries
 
 
-# Load environment variables
-load_dotenv()
+load_dotenv(find_dotenv())
 
 
 class Tokenizer:

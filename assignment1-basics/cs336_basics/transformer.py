@@ -13,7 +13,7 @@
 # Problem (transformer_accounting): Transformer LM resource accounting (5 points)
 
 
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 import torch
 from torch import Tensor, nn
 from einops import einsum, rearrange, repeat
@@ -21,8 +21,7 @@ from jaxtyping import Float, Int, Bool
 import json
 
 
-# Load environment variables
-load_dotenv()
+load_dotenv(find_dotenv())
 
 
 def transformer_accounting(

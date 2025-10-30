@@ -9,7 +9,7 @@
 # Problem (train_bpe_expts_owt): BPE Training on OpenWebText (2 points)
 
 
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 import os
 from typing import BinaryIO
 from tqdm import tqdm
@@ -18,8 +18,7 @@ import multiprocessing
 import json
 
 
-# Load environment variables
-load_dotenv()
+load_dotenv(find_dotenv())
 
 
 def decode_utf8_bytes_to_str_wrong(bytestring: bytes):
