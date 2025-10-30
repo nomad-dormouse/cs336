@@ -55,7 +55,7 @@ def parse_args():
     # Training
     parser.add_argument("--batch_size", type=int, default=int(get_default("batch_size")), help="Batch size")
     parser.add_argument("--val_batch_size", type=int, default=int(get_default("val_batch_size")), help="Validation batch size")
-    parser.add_argument("--train_tokens", type=int, default=int(get_default("train_tokens")), help="Number of training tokens")
+    parser.add_argument("--train_tokens", type=int, default=None, help="Number of training tokens (omit to auto-compute)")
     parser.add_argument("--max_iters", type=int, default=None, help="Maximum number of training iterations (omit to auto-compute)")
     parser.add_argument("--warmup_iters", type=int, default=None, help="Number of warmup iterations (omit to auto-compute)")
     parser.add_argument("--cosine_cycle_iters", type=int, default=None, help="Number of cosine annealing iterations (omit to auto-compute)")
@@ -382,6 +382,9 @@ def train_transformer(args: argparse.Namespace) -> None:
         args.max_iters = (args.train_tokens + train_tokens_per_iter - 1) // train_tokens_per_iter
         print(f"\nCalculated iterations to train on {args.train_tokens:,} tokens with {args.batch_size} batch and {args.context_length} context: {args.max_iters}")
 
+    if args.train_tokens is None:
+        args.train_tokens = args.max_iters * args.batch_size * args.context_length
+    
     if args.cosine_cycle_iters is None:
         args.cosine_cycle_iters = args.max_iters
 
