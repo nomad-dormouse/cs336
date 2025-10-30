@@ -55,6 +55,7 @@ def parse_args():
     # Training
     parser.add_argument("--batch_size", type=int, default=int(get_default("batch_size")), help="Batch size")
     parser.add_argument("--val_batch_size", type=int, default=int(get_default("val_batch_size")), help="Validation batch size")
+    parser.add_argument("--train_tokens", type=int, default=int(get_default("train_tokens")), help="Number of training tokens")
     parser.add_argument("--max_iters", type=int, default=None, help="Maximum number of training iterations (omit to auto-compute)")
     parser.add_argument("--warmup_iters", type=int, default=None, help="Number of warmup iterations (omit to auto-compute)")
     parser.add_argument("--cosine_cycle_iters", type=int, default=None, help="Number of cosine annealing iterations (omit to auto-compute)")
@@ -376,21 +377,20 @@ def training_loop(
 def train_transformer(args: argparse.Namespace) -> None:
     # Auto-compute max_iters if not provided
     if args.max_iters is None:
-        train_tokens_default = int(get_default("train_tokens"))
         train_tokens_per_iter = args.batch_size * args.context_length
-        args.max_iters = (train_tokens_default + train_tokens_per_iter - 1) // train_tokens_per_iter
-        print(f"\nNumber of iterations to train on {train_tokens_default:,} tokens: {args.max_iters}")
+        args.max_iters = (args.train_tokens + train_tokens_per_iter - 1) // train_tokens_per_iter
+        print(f"\nNumber of iterations to train on {args.train_tokens:,} tokens: {args.max_iters}")
 
     if args.cosine_cycle_iters is None:
         args.cosine_cycle_iters = args.max_iters
 
     if args.warmup_iters is None:
         warmup_percentage = int(get_default("warmup_percentage"))
-        args.warmup_iters = (args.max_iters * warmup_percentage + 100 - 1) // 100
+        args.warmup_iters = max(1, (args.max_iters * warmup_percentage + 100 - 1) // 100)
 
     if args.eval_and_log_interval is None:
         steps_number = int(get_default("steps_number"))
-        args.eval_and_log_interval = (args.max_iters + steps_number - 1) // steps_number
+        args.eval_and_log_interval = max(1, (args.max_iters + steps_number - 1) // steps_number)
 
     
     calculate_training_parameters(args)
