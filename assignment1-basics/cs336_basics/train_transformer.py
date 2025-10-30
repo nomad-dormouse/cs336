@@ -256,6 +256,7 @@ def training_loop(
     val_target_tensor: Int[Tensor, "args.val_batch_size args.context_length"],
     run_name: str,
     args: argparse.Namespace,
+    min_lr_percentage: int = 10,
     start_iteration: int = 0,
 ) -> None:
     model.train()
@@ -271,12 +272,13 @@ def training_loop(
             context_length=args.context_length,
         )
     
+    min_learning_rate = args.learning_rate * (min_lr_percentage / 100)
     for iteration in tqdm(range(start_iteration, args.max_iters)):
         # Get learning rate
         lr = get_lr_cosine_schedule(
             iteration,
             args.learning_rate,
-            args.learning_rate / 10,
+            min_learning_rate,
             args.warmup_iters,
             args.cosine_cycle_iters,
         )
@@ -474,6 +476,7 @@ def train_transformer(args: argparse.Namespace) -> None:
     )
     
     print("\nStarting training loop...\n")
+    min_lr_percentage = int(get_default("min_lr_percentage"))
     training_loop(
         device=device,
         model=model,
@@ -482,6 +485,7 @@ def train_transformer(args: argparse.Namespace) -> None:
         val_input_tensor=val_input_tensor,
         val_target_tensor=val_target_tensor,
         run_name=training_run_name,
+        min_lr_percentage=min_lr_percentage,
         start_iteration=start_iteration,
         args=args,
     )
