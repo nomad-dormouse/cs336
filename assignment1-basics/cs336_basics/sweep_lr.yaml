@@ -5,7 +5,7 @@
 
 entity: not-mad-dormouse
 project: cs336-assignment1
-name: lr-0.0001to1.0
+name: lr-0.0001to1.0-tokens-40960000
 program: cs336_basics/train_transformer.py
 
 method: grid
@@ -16,3 +16,7 @@ parameters:
   # Sweep parameters
   learning_rate:
     values: [1e-4, 1e-3, 1e-2, 1e-1, 1]
+
+  # Iterations count will be calculated based on the target train tokens amount
+  train_tokens:
+    value: 40960000

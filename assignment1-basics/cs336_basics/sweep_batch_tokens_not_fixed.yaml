@@ -5,7 +5,7 @@
 
 entity: not-mad-dormouse
 project: cs336-assignment1
-name: batch-1to256-tokens-not-fixed
+name: batch-1to256-tokens-40960000
 program: cs336_basics/train_transformer.py
 
 method: grid
@@ -19,4 +19,4 @@ parameters:
   
   # Fix iterations count to have different train tokens amount for each run
   max_iters:
-    value: 300
+    value: 5000

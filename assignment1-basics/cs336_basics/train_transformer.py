@@ -455,7 +455,7 @@ def train_transformer(args: argparse.Namespace) -> None:
         f"-h{args.num_heads}"
         f"-b{args.batch_size}"
         f"-r{args.learning_rate}"
-        f"-i{args.max_iters}"
+        f"-t{args.train_tokens}"
         f"-{args.dataset}-{str(device)}"
     )
     if args.test_mode == 1:
