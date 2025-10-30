@@ -5,7 +5,7 @@
 
 entity: not-mad-dormouse
 project: cs336-assignment1
-name: batch-1to512-with-adjustment
+name: batch-1to256-with-adjustment
 program: cs336_basics/train_transformer.py
 
 method: grid
@@ -15,7 +15,7 @@ metric:
 parameters:
   # Sweep parameters
   batch_size:
-    values: [1, 2, 4, 8, 16, 32, 64, 128, 256, 512]
+    values: [1, 2, 4, 8, 16, 32, 64, 128, 256]
   
   # Fixed parameters
   learning_rate:
