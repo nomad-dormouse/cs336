@@ -5,7 +5,7 @@
 
 entity: not-mad-dormouse
 project: cs336-assignment1
-name: batch-1to256-with-adjustment
+name: batch-1to256-tokens-fixed
 program: cs336_basics/train_transformer.py
 
 method: grid
