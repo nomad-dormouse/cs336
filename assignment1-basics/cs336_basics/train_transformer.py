@@ -295,6 +295,7 @@ def training_loop(
             )
 
         # Training step
+        torch.cuda.reset_peak_memory_stats()
         train_logits, train_loss, grad_norm = train_step(
             model,
             optimiser,
@@ -310,9 +311,9 @@ def training_loop(
             # Tokens model trained on so far
             train_tokens = (iteration + 1) * args.batch_size * args.context_length
 
-            # Memory usage in MB (GPU if CUDA available, else CPU RSS)
+            # Memory usage in MB (peak memory allocated GPU if CUDA available, else CPU RSS)
             if str(device) == "cuda" and torch.cuda.is_available():
-                memory_mb = torch.cuda.memory_allocated() / 1024 / 1024
+                memory_mb = torch.cuda.max_memory_allocated() / 1024 / 1024
             else:
                 memory_mb = psutil.Process().memory_info().rss / 1024 / 1024
 
@@ -345,6 +346,11 @@ def training_loop(
                 "iteration": iteration,
             })
             print(f"Iter {iteration:6d} | Train loss: {train_loss:.4f} | Val loss: {val_loss:.4f}\n")
+
+            # Release unused cached memory on CUDA
+            if str(device) == "cuda":
+                torch.cuda.synchronize()
+                torch.cuda.empty_cache()
         
         # Checkpointing (only if interval is provided)
         if args.checkpoint_interval:
@@ -355,10 +361,7 @@ def training_loop(
                 save_checkpoint(model, optimiser, iteration, checkpoint_path)
                 print(f"Saved checkpoint: {checkpoint_path}\n")
 
-        # Release unused cached memory on CUDA
-        if str(device) == "cuda" and torch.cuda.is_available():
-            torch.cuda.synchronize()
-            torch.cuda.empty_cache()
+        
 
     # Final checkpoint - save to trained directory
     trained_dir = Path("results/models/trained")
