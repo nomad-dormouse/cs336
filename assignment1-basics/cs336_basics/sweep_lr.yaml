@@ -5,7 +5,7 @@
 
 entity: not-mad-dormouse
 project: cs336-assignment1
-name: lr-0.0001to1
+name: lr-0.0001to1.0
 program: cs336_basics/train_transformer.py
 
 method: grid
