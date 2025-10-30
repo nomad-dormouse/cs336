@@ -82,6 +82,11 @@ def get_device(device: str) -> torch.device:
         else:
             return torch.device("cpu")
     else:
+        # Fall back to CPU if requested backend isn't available
+        if device == "cuda" and not torch.cuda.is_available():
+            return torch.device("cpu")
+        if device == "mps" and not (hasattr(torch.backends, "mps") and torch.backends.mps.is_available()):
+            return torch.device("cpu")
         return torch.device(device)
 
 
@@ -308,11 +313,10 @@ def training_loop(
             # Tokens model trained on so far
             train_tokens = (iteration + 1) * args.batch_size * args.context_length
 
-            # Memory usage in MB (GPU if CUDA, else CPU RSS)
-            if str(device) == "cuda":
+            # Memory usage in MB (GPU if CUDA available, else CPU RSS)
+            if str(device) == "cuda" and torch.cuda.is_available():
                 memory_mb = torch.cuda.memory_allocated() / 1024 / 1024
             else:
-                torch.cuda.synchronize()
                 memory_mb = psutil.Process().memory_info().rss / 1024 / 1024
 
             # Training metrics
@@ -355,7 +359,7 @@ def training_loop(
                 print(f"Saved checkpoint: {checkpoint_path}\n")
 
         # Release unused cached memory on CUDA
-        if str(device) == "cuda":
+        if str(device) == "cuda" and torch.cuda.is_available():
             torch.cuda.synchronize()
             torch.cuda.empty_cache()
 
@@ -371,21 +375,22 @@ def training_loop(
 
 def train_transformer(args: argparse.Namespace) -> None:
     # Auto-compute max_iters if not provided
-    # Target training tokens = 300 iters with 32 batch size and 256 context length
     if args.max_iters is None:
-        target_total_tokens = 300 * 32 * 256
-        tokens_per_iter = args.batch_size * args.context_length
-        args.max_iters = math.ceil(target_total_tokens / tokens_per_iter)
-        print(f"\nNumber of iterations to train on targer amount of tokens: {args.max_iters}")
+        train_tokens_default = int(get_default("train_tokens"))
+        train_tokens_per_iter = args.batch_size * args.context_length
+        args.max_iters = (train_tokens_default + train_tokens_per_iter - 1) // train_tokens_per_iter
+        print(f"\nNumber of iterations to train on {train_tokens_default:,} tokens: {args.max_iters}")
 
     if args.cosine_cycle_iters is None:
         args.cosine_cycle_iters = args.max_iters
 
     if args.warmup_iters is None:
-        args.warmup_iters = args.max_iters // 20
+        warmup_percentage = int(get_default("warmup_percentage"))
+        args.warmup_iters = (args.max_iters * warmup_percentage + 100 - 1) // 100
 
     if args.eval_and_log_interval is None:
-        args.eval_and_log_interval = args.max_iters // 100
+        steps_number = int(get_default("steps_number"))
+        args.eval_and_log_interval = (args.max_iters + steps_number - 1) // steps_number
 
     
     calculate_training_parameters(args)
