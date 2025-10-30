@@ -379,7 +379,7 @@ def train_transformer(args: argparse.Namespace) -> None:
     if args.max_iters is None:
         train_tokens_per_iter = args.batch_size * args.context_length
         args.max_iters = (args.train_tokens + train_tokens_per_iter - 1) // train_tokens_per_iter
-        print(f"\nNumber of iterations to train on {args.train_tokens:,} tokens: {args.max_iters}")
+        print(f"\nCalculated iterations to train on {args.train_tokens:,} tokens with {args.batch_size} batch and {args.context_length} context: {args.max_iters}")
 
     if args.cosine_cycle_iters is None:
         args.cosine_cycle_iters = args.max_iters

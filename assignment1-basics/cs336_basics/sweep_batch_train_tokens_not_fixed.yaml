@@ -17,8 +17,6 @@ parameters:
   batch_size:
     values: [1, 2, 4, 8, 16, 32, 64, 128, 256]
   
-  # Fixed parameters
-  learning_rate:
-    value: 1e-3
+  # Fix iterations count to have different train tokens amount for each run
   max_iters:
     value: 300
