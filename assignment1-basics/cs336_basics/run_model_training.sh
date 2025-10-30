@@ -6,9 +6,7 @@
 
 uv run python -m cs336_basics.train_transformer \
         --device auto \
-        --batch_size 32 \
-        --max_iters 5000 \
-        --learning_rate 1e-3 \
+        --train_tokens 40000000 \
 
 if [ $? -eq 0 ]; then
     echo "Script executed successfully!"
