@@ -260,8 +260,6 @@ def training_loop(
 ) -> None:
     model.train()
     
-    if str(device) == "cuda":
-        torch.cuda.synchronize()
     start_time = time.time()
 
     if args.test_mode == 1:
@@ -307,8 +305,6 @@ def training_loop(
         
         # Evaluation and logging
         if (iteration + 1) % args.eval_and_log_interval == 0 and iteration > 0:
-            if str(device) == "cuda":
-                torch.cuda.synchronize()
             elapsed_time = time.time() - start_time
 
             # Tokens model trained on so far
