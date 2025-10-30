@@ -378,7 +378,7 @@ def training_loop(
 
 def train_transformer(args: argparse.Namespace) -> None:
     if args.train_tokens is None:
-        if args.max_iters is not None:
+        if args.max_iters is None:
             args.train_tokens = int(get_default("train_tokens"))
         else:
             args.train_tokens = args.max_iters * args.batch_size * args.context_length
