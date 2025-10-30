@@ -6,7 +6,7 @@
 
 uv run python -m cs336_basics.generate_text \
     --device cpu \
-    --model_filename "v10000-c256-d512-f1344-l4-h16-b32-r0.001-i5000-TS-cuda" \
+    --model_filename "v10000-c256-d512-f1344-l4-h16-b128-r0.001-t163840000-TS-cuda" \
     --prompt "Once upon a time" \
     --temperature 0.7 \
     --top_p 0.9

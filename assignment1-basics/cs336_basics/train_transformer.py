@@ -297,7 +297,8 @@ def training_loop(
             )
 
         # Training step
-        torch.cuda.reset_peak_memory_stats()
+        if str(device) == "cuda" and torch.cuda.is_available():
+            torch.cuda.reset_peak_memory_stats()
         train_logits, train_loss, grad_norm = train_step(
             model,
             optimiser,
@@ -376,14 +377,16 @@ def training_loop(
 
 
 def train_transformer(args: argparse.Namespace) -> None:
-    # Auto-compute max_iters if not provided
+    if args.train_tokens is None:
+        if args.max_iters is not None:
+            args.train_tokens = int(get_default("train_tokens"))
+        else:
+            args.train_tokens = args.max_iters * args.batch_size * args.context_length
+    
     if args.max_iters is None:
         train_tokens_per_iter = args.batch_size * args.context_length
         args.max_iters = (args.train_tokens + train_tokens_per_iter - 1) // train_tokens_per_iter
         print(f"\nCalculated iterations to train on {args.train_tokens:,} tokens with {args.batch_size} batch and {args.context_length} context: {args.max_iters}")
-
-    if args.train_tokens is None:
-        args.train_tokens = args.max_iters * args.batch_size * args.context_length
     
     if args.cosine_cycle_iters is None:
         args.cosine_cycle_iters = args.max_iters
