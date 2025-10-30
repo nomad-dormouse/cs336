@@ -5,8 +5,8 @@
 
 
 uv run python -m cs336_basics.train_transformer \
+        --test_mode 1 \
         --device auto \
-        --train_tokens 40960000 \
 
 if [ $? -eq 0 ]; then
     echo "Script executed successfully!"
