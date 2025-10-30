@@ -55,7 +55,7 @@ def parse_args():
     # Training
     parser.add_argument("--batch_size", type=int, default=int(get_default("batch_size")), help="Batch size")
     parser.add_argument("--val_batch_size", type=int, default=int(get_default("val_batch_size")), help="Validation batch size")
-    parser.add_argument("--max_iters", type=int, default=int(get_default("max_iters")), help="Maximum number of training iterations (omit to auto-compute)")
+    parser.add_argument("--max_iters", type=int, default=None, help="Maximum number of training iterations (omit to auto-compute)")
     parser.add_argument("--warmup_iters", type=int, default=None, help="Number of warmup iterations (omit to auto-compute)")
     parser.add_argument("--cosine_cycle_iters", type=int, default=None, help="Number of cosine annealing iterations (omit to auto-compute)")
     parser.add_argument("--learning_rate", type=float, default=float(get_default("learning_rate")), help="Maximum learning rate")
@@ -253,6 +253,9 @@ def training_loop(
     start_iteration: int = 0,
 ) -> None:
     model.train()
+    
+    if str(device) == "cuda":
+        torch.cuda.synchronize()
     start_time = time.time()
 
     if args.test_mode == 1:
@@ -298,6 +301,8 @@ def training_loop(
         
         # Evaluation and logging
         if (iteration + 1) % args.eval_and_log_interval == 0 and iteration > 0:
+            if str(device) == "cuda":
+                torch.cuda.synchronize()
             elapsed_time = time.time() - start_time
 
             # Tokens model trained on so far
@@ -307,6 +312,7 @@ def training_loop(
             if str(device) == "cuda":
                 memory_mb = torch.cuda.memory_allocated() / 1024 / 1024
             else:
+                torch.cuda.synchronize()
                 memory_mb = psutil.Process().memory_info().rss / 1024 / 1024
 
             # Training metrics
@@ -359,10 +365,6 @@ def training_loop(
     final_checkpoint_path = trained_dir / f"{run_name}.pt"
     save_checkpoint(model, optimiser, iteration, final_checkpoint_path)
     print(f"\nTraining completed! Final checkpoint saved: {final_checkpoint_path}\n")
-    
-    # Clean up CUDA cache if using CUDA
-    if str(device) == "cuda":
-        torch.cuda.empty_cache()
 
     wandb.finish()
 
