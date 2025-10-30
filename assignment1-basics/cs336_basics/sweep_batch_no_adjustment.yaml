@@ -5,7 +5,7 @@
 
 entity: not-mad-dormouse
 project: cs336-assignment1
-name: batch-1to512-no-data-adjustment
+name: batch-1to512-no-adjustment
 program: cs336_basics/train_transformer.py
 
 method: grid

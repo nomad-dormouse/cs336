@@ -49,7 +49,7 @@ def parse_args():
     
     # Training
     parser.add_argument("--batch_size", type=int, default=32, help="Batch size")
-    parser.add_argument("--val_batch_size", type=int, default=256, help="Validation batch size")
+    parser.add_argument("--val_batch_size", type=int, default=128, help="Validation batch size")
     parser.add_argument("--max_iters", type=int, default=None, help="Maximum number of training iterations (omit to auto-compute)")
     parser.add_argument("--warmup_iters", type=int, default=None, help="Number of warmup iterations (omit to auto-compute)")
     parser.add_argument("--cosine_cycle_iters", type=int, default=None, help="Number of cosine annealing iterations (omit to auto-compute)")
@@ -342,6 +342,11 @@ def training_loop(
                 checkpoint_path = checkpoint_dir / f"iter_{iteration}.pt"
                 save_checkpoint(model, optimiser, iteration, checkpoint_path)
                 print(f"Saved checkpoint: {checkpoint_path}\n")
+
+        # Release unused cached memory on CUDA
+        if str(device) == "cuda":
+            torch.cuda.synchronize()
+            torch.cuda.empty_cache()
 
     # Final checkpoint - save to trained directory
     trained_dir = Path("results/models/trained")
