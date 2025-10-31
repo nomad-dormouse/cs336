@@ -6,7 +6,7 @@
 
 uv run python -m cs336_basics.train_transformer \
         --test_mode 0 \
-        --device cpu \
+        --device auto \
 
 if [ $? -eq 0 ]; then
     echo "Script executed successfully!"
