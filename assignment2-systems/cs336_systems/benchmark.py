@@ -48,6 +48,32 @@ def benchmark(
     warmup_steps: int,
     mode: Literal["f", "f_b"],
 ) -> dict:
+    # Initialise benchmark results
+    benchmark_results = {
+        "mode": mode,
+        "steps": steps,
+        "warmup_steps": warmup_steps,
+        "forward_path": {
+            "times": [],
+            "avg_time": None,
+            "std_time": None,
+            "total_time": None,
+        }
+    }
+    if mode == 'f_b':
+        benchmark_results["backward_path"] = {
+            "times": [],
+            "avg_time": None,
+            "std_time": None,
+            "total_time": None,
+        }
+        benchmark_results["forward_and_backward_paths"] = {
+            "times": [],
+            "avg_time": None,
+            "std_time": None,
+            "total_time": None,
+        }
+    
     # Warm-up steps
     for _ in range(warmup_steps):
         output = model(input)
@@ -58,30 +84,7 @@ def benchmark(
         torch.cuda.synchronize()
 
     # Actual benchmarking
-    benchmark_results = {
-        "steps": steps,
-        "warmup_steps": warmup_steps,
-        "forward_path": {
-            "times": [],
-            "avg_time": None,
-            "std_time": None,
-            "total_time": None,
-        },
-        "backward_path": {
-            "times": [],
-            "avg_time": None,
-            "std_time": None,
-            "total_time": None,
-        },
-        "forward_and_backward_paths": {
-            "times": [],
-            "avg_time": None,
-            "std_time": None,
-            "total_time": None,
-        },
-    }
-
-    for i in range(steps):
+    for _ in range(steps):
         start_time_forward = timeit.default_timer()
         output = model(input)
         torch.cuda.synchronize()
