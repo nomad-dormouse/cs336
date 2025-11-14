@@ -94,8 +94,8 @@ def main():
 
     # Create model
     model = BasicsTransformerLM(
-        vocab=vocab,
-        context=args.context,
+        vocab_size=vocab,
+        context_length=args.context,
         d_model=d_model,
         num_layers=num_layers,
         num_heads=num_heads,
