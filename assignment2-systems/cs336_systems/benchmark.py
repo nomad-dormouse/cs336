@@ -47,7 +47,7 @@ def benchmark(
     steps: int,
     warmup_steps: int,
     mode: Literal["f", "f_b"],
-) -> tuple[float, float]:
+) -> dict:
     # Warm-up steps
     for _ in range(warmup_steps):
         output = model(input)
@@ -58,17 +58,36 @@ def benchmark(
         torch.cuda.synchronize()
 
     # Actual benchmarking
-    benchmark_results = {}
-    time_forward = []
-    time_backward = []
-    time_total = []
+    benchmark_results = {
+        "steps": steps,
+        "warmup_steps": warmup_steps,
+        "forward_path": {
+            "times": [],
+            "avg_time": None,
+            "std_time": None,
+            "total_time": None,
+        },
+        "backward_path": {
+            "times": [],
+            "avg_time": None,
+            "std_time": None,
+            "total_time": None,
+        },
+        "forward_and_backward_paths": {
+            "times": [],
+            "avg_time": None,
+            "std_time": None,
+            "total_time": None,
+        },
+    }
 
     for i in range(steps):
         start_time_forward = timeit.default_timer()
         output = model(input)
         torch.cuda.synchronize()
         end_time_forward = timeit.default_timer()
-        time_forward.append(end_time_forward - start_time_forward)
+        time_forward = end_time_forward - start_time_forward
+        benchmark_results["forward_path"]["times"].append(time_forward)
 
         if mode == 'f_b':
             start_time_backward = timeit.default_timer()
@@ -77,28 +96,29 @@ def benchmark(
             model.zero_grad()
             torch.cuda.synchronize()
             end_time_backward = timeit.default_timer()
-            time_backward.append(end_time_backward - start_time_backward)
-            time_total.append(time_forward[i] + time_backward[i])
+            time_backward = end_time_backward - start_time_backward
+            benchmark_results["backward_path"]["times"].append(time_backward)
+            benchmark_results["forward_and_backward_paths"]["times"].append(time_forward + time_backward)
 
-    forward_time = np.array(time_forward)
-    benchmark_results["forward"] = {
-        "avg_time": forward_time.mean(),
-        "std_time": forward_time.std(),
-        "total_time": forward_time.sum(),
+    forward_times = np.array(benchmark_results["forward_path"]["times"])
+    benchmark_results["forward_path"] = {
+        "avg_time": forward_times.mean(),
+        "std_time": forward_times.std(),
+        "total_time": forward_times.sum(),
     }
 
     if mode == 'f_b':
-        backward_time = np.array(time_backward)
-        benchmark_results["backward"] = {
-            "avg_time": backward_time.mean(),
-            "std_time": backward_time.std(),
-            "total_time": backward_time.sum(),
+        backward_times = np.array(benchmark_results["backward_path"]["times"])
+        benchmark_results["backward_path"] = {
+            "avg_time": backward_times.mean(),
+            "std_time": backward_times.std(),
+            "total_time": backward_times.sum(),
         }
-        total_time = np.array(time_total)
-        benchmark_results["total"] = {
-            "avg_time": total_time.mean(),
-            "std_time": total_time.std(),
-            "total_time": total_time.sum(),
+        forward_and_backward_times = np.array(benchmark_results["forward_and_backward_paths"]["times"])
+        benchmark_results["forward_and_backward_paths"] = {
+            "avg_time": forward_and_backward_times.mean(),
+            "std_time": forward_and_backward_times.std(),
+            "total_time": forward_and_backward_times.sum(),
         }
     return benchmark_results
 
@@ -107,16 +127,16 @@ def print_benchmark_results(benchmark_results: dict):
     print(f"Benchmark Results:")
     print(f"  Steps: {benchmark_results['steps']}")
     print(f"  Warm-up steps: {benchmark_results['warmup_steps']}")
-    print(f"  Forward:")
-    print(f"    Average time per step: {benchmark_results['forward']['avg_time']*1000:.4f} ms")
-    print(f"    Standard deviation: {benchmark_results['forward']['std_time']*1000:.4f} ms")
-    print(f"    Total time: {benchmark_results['forward']['total_time']:.4f} s")
+    print(f"  Forward path:")
+    print(f"    Average time per step: {benchmark_results['forward_path']['avg_time']*1000:.4f} ms")
+    print(f"    Standard deviation: {benchmark_results['forward_path']['std_time']*1000:.4f} ms")
+    print(f"    Total time: {benchmark_results['forward_path']['total_time']:.4f} s")
     if benchmark_results['mode'] == 'f_b':
-        print(f"  Backward:")   
+        print(f"  Backward path:")   
         print(f"    Average time per step: {benchmark_results['backward']['avg_time']*1000:.4f} ms")
         print(f"    Standard deviation: {benchmark_results['backward']['std_time']*1000:.4f} ms")
         print(f"    Total time: {benchmark_results['backward']['total_time']:.4f} s")
-        print(f"  Total:")
+        print(f"  Forward and backward paths:")
         print(f"    Average time per step: {benchmark_results['total']['avg_time']*1000:.4f} ms")
         print(f"    Standard deviation: {benchmark_results['total']['std_time']*1000:.4f} ms")
         print(f"    Total time: {benchmark_results['total']['total_time']:.4f} s")
