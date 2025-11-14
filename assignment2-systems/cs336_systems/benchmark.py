@@ -73,10 +73,11 @@ def benchmark(
         end_time = timeit.default_timer()
         times.append(end_time - start_time)
 
-    total_time = sum(times)
     avg_time = total_time / steps
+    std_time = np.std(times)
+    total_time = sum(times)
     
-    return avg_time, total_time
+    return avg_time, std_time, total_time
 
 
 def main():
@@ -116,7 +117,7 @@ def main():
     )
 
     # Run benchmark
-    avg_time, total_time = benchmark(
+    avg_time, std_time, total_time = benchmark(
         model=model,
         input=input,
         target=target,
@@ -126,14 +127,14 @@ def main():
     )
 
     # Print results
-    print(f'Benchmark Results:')
-    print(f'  Mode: {args.mode}')
-    print(f'  Steps: {args.steps}')
-    print(f'  Warm-up steps: {args.warmup_steps}')
-    print(f'  Average time per step: {avg_time*1000:.4f} ms')
-    print(f'  Total time: {total_time:.4f} s')
+    print(f"Benchmark Results:")
+    print(f"  Mode: {args.mode}")
+    print(f"  Steps: {args.steps}")
+    print(f"  Warm-up steps: {args.warmup_steps}")
+    print(f"  Average time per step: {avg_time*1000:.4f} ms")
+    print(f"  Standard deviation: {std_time*1000:.4f} ms")
+    print(f"  Total time: {total_time:.4f} s")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
-
