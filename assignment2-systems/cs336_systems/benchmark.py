@@ -33,7 +33,7 @@ def parse_args():
     
     # Benchmarking parameters
     parser.add_argument("--steps", type=int, default=10, help="Number of steps to measure")
-    parser.add_argument("--warmup-steps", type=int, default=3, help="Number of warm-up steps")
+    parser.add_argument("--warmup-steps", type=int, default=5, help="Number of warm-up steps")
     parser.add_argument("--mode", type=str, choices=["f", "f_b"], default="f_b", 
                        help="Whether to benchmark forward only or forward+backward")
     
@@ -58,26 +58,68 @@ def benchmark(
         torch.cuda.synchronize()
 
     # Actual benchmarking
-    times = []
-    
-    for _ in range(steps):
-        start_time = timeit.default_timer()
-        
+    benchmark_results = {}
+    time_forward = []
+    time_backward = []
+    time_total = []
+
+    for i in range(steps):
+        start_time_forward = timeit.default_timer()
         output = model(input)
+        torch.cuda.synchronize()
+        end_time_forward = timeit.default_timer()
+        time_forward.append(end_time_forward - start_time_forward)
+
         if mode == 'f_b':
+            start_time_backward = timeit.default_timer()
             loss = cross_entropy(output, target)
             loss.backward()
             model.zero_grad()
-        torch.cuda.synchronize()
-        
-        end_time = timeit.default_timer()
-        times.append(end_time - start_time)
+            torch.cuda.synchronize()
+            end_time_backward = timeit.default_timer()
+            time_backward.append(end_time_backward - start_time_backward)
+            time_total.append(time_forward[i] + time_backward[i])
 
-    avg_time = total_time / steps
-    std_time = np.std(times)
-    total_time = sum(times)
-    
-    return avg_time, std_time, total_time
+    forward_time = np.array(time_forward)
+    benchmark_results["forward"] = {
+        "avg_time": forward_time.mean(),
+        "std_time": forward_time.std(),
+        "total_time": forward_time.sum(),
+    }
+
+    if mode == 'f_b':
+        backward_time = np.array(time_backward)
+        benchmark_results["backward"] = {
+            "avg_time": backward_time.mean(),
+            "std_time": backward_time.std(),
+            "total_time": backward_time.sum(),
+        }
+        total_time = np.array(time_total)
+        benchmark_results["total"] = {
+            "avg_time": total_time.mean(),
+            "std_time": total_time.std(),
+            "total_time": total_time.sum(),
+        }
+    return benchmark_results
+
+
+def print_benchmark_results(benchmark_results: dict):
+    print(f"Benchmark Results:")
+    print(f"  Steps: {benchmark_results['steps']}")
+    print(f"  Warm-up steps: {benchmark_results['warmup_steps']}")
+    print(f"  Forward:")
+    print(f"    Average time per step: {benchmark_results['forward']['avg_time']*1000:.4f} ms")
+    print(f"    Standard deviation: {benchmark_results['forward']['std_time']*1000:.4f} ms")
+    print(f"    Total time: {benchmark_results['forward']['total_time']:.4f} s")
+    if benchmark_results['mode'] == 'f_b':
+        print(f"  Backward:")   
+        print(f"    Average time per step: {benchmark_results['backward']['avg_time']*1000:.4f} ms")
+        print(f"    Standard deviation: {benchmark_results['backward']['std_time']*1000:.4f} ms")
+        print(f"    Total time: {benchmark_results['backward']['total_time']:.4f} s")
+        print(f"  Total:")
+        print(f"    Average time per step: {benchmark_results['total']['avg_time']*1000:.4f} ms")
+        print(f"    Standard deviation: {benchmark_results['total']['std_time']*1000:.4f} ms")
+        print(f"    Total time: {benchmark_results['total']['total_time']:.4f} s")
 
 
 def main():
@@ -117,7 +159,7 @@ def main():
     )
 
     # Run benchmark
-    avg_time, std_time, total_time = benchmark(
+    benchmark_results = benchmark(
         model=model,
         input=input,
         target=target,
@@ -127,13 +169,7 @@ def main():
     )
 
     # Print results
-    print(f"Benchmark Results:")
-    print(f"  Mode: {args.mode}")
-    print(f"  Steps: {args.steps}")
-    print(f"  Warm-up steps: {args.warmup_steps}")
-    print(f"  Average time per step: {avg_time*1000:.4f} ms")
-    print(f"  Standard deviation: {std_time*1000:.4f} ms")
-    print(f"  Total time: {total_time:.4f} s")
+    print_benchmark_results(benchmark_results)
 
 
 if __name__ == "__main__":
