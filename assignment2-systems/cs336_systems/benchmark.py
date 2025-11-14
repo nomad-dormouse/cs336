@@ -112,7 +112,7 @@ def main():
         dataset=dataset,
         batch_size=batch,
         context_length=args.context,
-        device=device,
+        device=str(device),
     )
 
     # Run benchmark
