@@ -83,8 +83,8 @@ def main():
     # Set up arguments
     args = parse_args()
     d_model, d_ff, num_layers, num_heads = MODEL_CONFIGS[args.size]
-    vocab_size = 10000
-    batch_size = 4
+    vocab = 10000
+    batch = 4
 
     # Get device
     if torch.cuda.is_available():
@@ -94,8 +94,8 @@ def main():
 
     # Create model
     model = BasicsTransformerLM(
-        vocab_size=vocab_size,
-        context_length=args.context_length,
+        vocab=vocab,
+        context=args.context,
         d_model=d_model,
         num_layers=num_layers,
         num_heads=num_heads,
@@ -105,13 +105,13 @@ def main():
     model.train()
 
     # Create a random dataset
-    dataset = np.random.randint(0, vocab_size, size=(10000,), dtype=np.int64)
+    dataset = np.random.randint(0, vocab, size=(10000,), dtype=np.int64)
     
     # Get random batch
     input, target = get_batch(
         dataset=dataset,
-        batch_size=batch_size,
-        context_length=args.context_length,
+        batch_size=batch,
+        context_length=args.context,
         device=device,
     )
 
