@@ -33,8 +33,10 @@ def parse_args():
     
     parser.add_argument("--mode", type=str, choices=["f", "b", "f_b"], default="f_b", 
                        help="Whether to benchmark forward only, backward only, or forward+backward")
-    parser.add_argument("--steps", type=int, default=10, help="Number of steps to measure")
-    parser.add_argument("--warmup", type=int, default=5, help="Number of warmup steps")
+    parser.add_argument("--steps", type=int, default=10,
+                       help="Number of steps to measure. Default: 10")
+    parser.add_argument("--warmup", type=int, nargs='+', default=[5],
+                       help="Number of warmup steps. Default: 5")
     parser.add_argument("--sizes", type=str, nargs='+', choices=list(MODEL_CONFIGS.keys()), default=["s"],
                        help=f"Model sizes to run benchmarking sweep on. Choices: {list(MODEL_CONFIGS.keys())}. Default: s")
     parser.add_argument("--contexts", type=int, nargs='+', default=[256], 
@@ -198,37 +200,38 @@ def run_benchmarking_experiment(
     # Run jobs sequentially on single GPU
     results = []
     job_num = 0
-    for size in sizes:
-        d_model, d_ff, num_layers, num_heads = MODEL_CONFIGS[size]
-        for context in contexts:
-            torch.cuda.empty_cache()
-            job_num += 1
+    for steps in warmup_steps:
+        for size in sizes:
+            d_model, d_ff, num_layers, num_heads = MODEL_CONFIGS[size]
+            for context in contexts:
+                job_num += 1
+                torch.cuda.empty_cache()
+                print(f"\n[{job_num}/{total_jobs}] Calculating optimiser accounting and running benchmarking for size={size}...\n")
+                
+                adamw_accounting(
+                    model_name=size,
+                    batch_size=batch_size,
+                    vocab_size=vocab_size,
+                    context_length=context,
+                    num_layers=num_layers,
+                    d_model=d_model,
+                    num_heads=num_heads,
+                )
 
-            adamw_accounting(
-                model_name=size,
-                batch_size=batch_size,
-                vocab_size=vocab_size,
-                context_length=context,
-                num_layers=num_layers,
-                d_model=d_model,
-                num_heads=num_heads,
-            )
-
-            print(f"\n[{job_num}/{total_jobs}] Running benchmarking for size={size} and context={context}...")
-            benchmark_results = run_benchmarking(
-                size=size,
-                context=context,
-                steps=steps,
-                warmup_steps=warmup_steps,
-                vocab_size=vocab_size,
-                batch_size=batch_size,
-                d_model=d_model,
-                num_layers=num_layers,
-                num_heads=num_heads,
-                d_ff=d_ff,
-                mode=mode,
-            )
-            results.append(benchmark_results)
+                benchmark_results = run_benchmarking(
+                    size=size,
+                    context=context,
+                    steps=steps,
+                    warmup_steps=steps,
+                    vocab_size=vocab_size,
+                    batch_size=batch_size,
+                    d_model=d_model,
+                    num_layers=num_layers,
+                    num_heads=num_heads,
+                    d_ff=d_ff,
+                    mode=mode,
+                )
+                results.append(benchmark_results)
     
     # Combine results into DataFrame
     cols = ["size", "d_model", "d_ff", "num_layers", "num_heads", "context", "vocab_size", "batch_size", "steps", "warmup_steps", "mode", "forward_and_backward_ms", "forward_ms", "backward_ms"]
