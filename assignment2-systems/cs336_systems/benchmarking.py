@@ -129,6 +129,7 @@ def run_benchmarking(
     # Get device
     if torch.cuda.is_available():
         device = torch.device("cuda")
+        torch.cuda.empty_cache()
     else:
         raise RuntimeError("CUDA is not available")
 
@@ -217,7 +218,6 @@ def run_benchmarking_experiment(
 
             for warmup in warmup_steps:
                 print(f"\n{warmup} WARMUP STEPS")
-                torch.cuda.empty_cache()
                 benchmark_results = run_benchmarking(
                     size=size,
                     context=context,
