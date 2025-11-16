@@ -1,4 +1,5 @@
 import argparse
+import sys
 import timeit
 from pathlib import Path
 from tqdm import tqdm
@@ -11,6 +12,10 @@ import torch.nn as nn
 from cs336_basics.data import get_batch
 from cs336_basics.model import BasicsTransformerLM
 from cs336_basics.nn_utils import cross_entropy
+
+# Import adamw_accounting from assignment1-basics
+sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "assignment1-basics"))
+from cs336_basics.optimiser import adamw_accounting
 
 
 # Model size configurations: (d_model, d_ff, num_layers, num_heads)
@@ -29,7 +34,7 @@ def parse_args():
     parser.add_argument("--mode", type=str, choices=["f", "b", "f_b"], default="f_b", 
                        help="Whether to benchmark forward only, backward only, or forward+backward")
     parser.add_argument("--steps", type=int, default=10, help="Number of steps to measure")
-    parser.add_argument("--warmup_steps", type=int, default=5, help="Number of warm-up steps")
+    parser.add_argument("--warmup", type=int, default=5, help="Number of warmup steps")
     parser.add_argument("--sizes", type=str, nargs='+', choices=list(MODEL_CONFIGS.keys()), default=["s"],
                        help=f"Model sizes to run benchmarking sweep on. Choices: {list(MODEL_CONFIGS.keys())}. Default: s")
     parser.add_argument("--contexts", type=int, nargs='+', default=[256], 
@@ -112,11 +117,12 @@ def run_benchmarking(
     warmup_steps: int = 5,
     vocab_size: int = 10000,
     batch_size: int = 4,
+    d_model: int = 768,
+    num_layers: int = 12,
+    num_heads: int = 12,
+    d_ff: int = 3072,
     mode: str = "f_b",
 ) -> dict:
-    # Get model configuration
-    d_model, d_ff, num_layers, num_heads = MODEL_CONFIGS[size]
-
     # Get device
     if torch.cuda.is_available():
         device = torch.device("cuda")
@@ -158,7 +164,13 @@ def run_benchmarking(
 
     # Add metadata to results
     benchmark_results["size"] = size
+    benchmark_results["d_model"] = d_model
+    benchmark_results["d_ff"] = d_ff
+    benchmark_results["num_layers"] = num_layers
+    benchmark_results["num_heads"] = num_heads
     benchmark_results["context"] = context
+    benchmark_results["vocab_size"] = vocab_size
+    benchmark_results["batch_size"] = batch_size
     benchmark_results["mode"] = mode
     benchmark_results["steps"] = steps
     benchmark_results["warmup_steps"] = warmup_steps
@@ -175,7 +187,7 @@ def run_benchmarking_experiment(
 ) -> None:
     results_dir = Path("./results")
     results_dir.mkdir(parents=True, exist_ok=True)
-    filename = f"sizes_{'_'.join(sizes)}_contexts_{'_'.join(str(c) for c in contexts)}"
+    filename = f"warmup_{warmup_steps}_steps_{steps}_mode_{mode}_sizes_{'_'.join(sizes)}_contexts_{'_'.join(str(c) for c in contexts)}"
     csv_file = results_dir / f"benchmarking_{filename}.csv"
 
     total_jobs = len(sizes) * len(contexts)
@@ -188,20 +200,39 @@ def run_benchmarking_experiment(
         for context in contexts:
             torch.cuda.empty_cache()
             job_num += 1
-            print(f"[{job_num}/{total_jobs}] Running benchmarking for size={size} and context={context}...")
-            benchmark_results = run_benchmarking(size, context, steps, warmup_steps, mode=mode)
+            d_model, d_ff, num_layers, num_heads = MODEL_CONFIGS[size]
+            adamw_accounting(
+                model_name=size,
+                batch_size=4,
+                vocab_size=10000,
+                context_length=context,
+                num_layers=num_layers,
+                d_model=d_model,
+                num_heads=num_heads,
+            )
+            print(f"\n[{job_num}/{total_jobs}] Running benchmarking for size={size} and context={context}...")
+            benchmark_results = run_benchmarking(
+                size=size,
+                context=context,
+                steps=steps,
+                warmup_steps=warmup_steps,
+                vocab_size=10000,
+                batch_size=4,
+                d_model=d_model,
+                num_layers=num_layers,
+                num_heads=num_heads,
+                d_ff=d_ff,
+                mode=mode,
+            )
             results.append(benchmark_results)
     
     # Combine results into DataFrame
-    cols = ["size", "context", "warmup_steps", "steps", "mode", "forward_and_backward_ms", "forward_ms", "backward_ms"]
+    cols = ["size", "d_model", "d_ff", "num_layers", "num_heads", "context", "vocab_size", "batch_size", "steps", "warmup_steps", "mode", "forward_and_backward_ms", "forward_ms", "backward_ms"]
     df = pd.DataFrame(results)[cols]
     
-    # Save to CSV
+    # Save to CSV and print DataFrame
     df.to_csv(csv_file, index=False)
-    print(f"Results saved to: {csv_file}")
-    
-    # Print DataFrame
-    print("\nBENCHMARKING RESULTS:")
+    print(f"\nResults saved to: {csv_file}\n")
     print(df.to_string(index=False))
 
 
@@ -209,7 +240,7 @@ if __name__ == "__main__":
     args = parse_args()
     run_benchmarking_experiment(
         steps=args.steps,
-        warmup_steps=args.warmup_steps,
+        warmup_steps=args.warmup,
         mode=args.mode,
         sizes=args.sizes,
         contexts=args.contexts,
