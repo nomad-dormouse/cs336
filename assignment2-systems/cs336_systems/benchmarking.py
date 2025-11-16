@@ -14,8 +14,8 @@ from cs336_basics.model import BasicsTransformerLM
 from cs336_basics.nn_utils import cross_entropy
 
 # Import adamw_accounting from assignment1-basics
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / "assignment1-basics"))
-from cs336_basics.optimiser import adamw_accounting
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / "assignment1-basics" / "cs336_basics"))
+from optimiser import adamw_accounting
 
 
 # Model size configurations: (d_model, d_ff, num_layers, num_heads)
