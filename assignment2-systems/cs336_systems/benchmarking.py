@@ -187,10 +187,10 @@ def run_benchmarking_experiment(
     vocab_size: int = 10000,
     batch_size: int = 4,
 ) -> None:
-    results_dir = Path("./results")
-    results_dir.mkdir(parents=True, exist_ok=True)
+    benchmarking_dir = Path("./results/benchmarking")
+    benchmarking_dir.mkdir(parents=True, exist_ok=True)
     filename = f"warmup_{warmup_steps}_steps_{steps}_mode_{mode}_sizes_{'_'.join(sizes)}_contexts_{'_'.join(str(c) for c in contexts)}"
-    csv_file = results_dir / f"benchmarking_{filename}.csv"
+    csv_file = benchmarking_dir / f"{filename}.csv"
 
     total_jobs = len(sizes) * len(contexts)
     print(f"Running {total_jobs} benchmarking jobs sequentially on single GPU...")

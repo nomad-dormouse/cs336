@@ -16,7 +16,6 @@ from jaxtyping import Float, Int
 from typing import Iterable, Optional, Callable, Union, BinaryIO, IO
 import json
 import math
-import numpy as np
 
 
 load_dotenv(find_dotenv())
@@ -312,9 +311,9 @@ def adamw_accounting(
         }
     }
     
-    results_dir = Path("results/accounting")
-    results_dir.mkdir(parents=True, exist_ok=True)
-    filename = results_dir / f"AdamW_{model_name}_batch_{batch_size}.json"
+    accounting_dir = Path("./results/accounting")
+    accounting_dir.mkdir(parents=True, exist_ok=True)
+    filename = accounting_dir / f"{model_name}_batch_{batch_size}.json"
     with open(filename, "w") as f:
         json.dump(results, f)
 
