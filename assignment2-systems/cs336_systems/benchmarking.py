@@ -63,7 +63,7 @@ def benchmark(
     if warmup_steps > 0:
         for _ in tqdm(range(warmup_steps), desc="Warm-up steps"):
             output = model(input)
-            if mode == 'f_b':
+            if mode == "f" or mode == "f_b":
                 loss = cross_entropy(output, target)
                 loss.backward()
                 model.zero_grad()
@@ -71,6 +71,9 @@ def benchmark(
 
     # Actual benchmarking
     for _ in tqdm(range(steps), desc="Benchmarking steps"):
+        
+        torch.cuda.empty_cache()
+
         if mode == 'f' or mode == 'f_b':
             start_time_forward = timeit.default_timer()
             output = model(input)
@@ -129,7 +132,6 @@ def run_benchmarking(
     # Get device
     if torch.cuda.is_available():
         device = torch.device("cuda")
-        torch.cuda.empty_cache()
     else:
         raise RuntimeError("CUDA is not available")
 
