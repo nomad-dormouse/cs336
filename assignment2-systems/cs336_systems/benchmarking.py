@@ -31,16 +31,16 @@ MODEL_CONFIGS = {
 def parse_args():
     parser = argparse.ArgumentParser(description="Benchmark Transformer model forward and backward passes")
     
-    parser.add_argument("--mode", type=str, choices=["f", "b", "f_b"], default="f_b", 
-                       help="Whether to benchmark forward only, backward only, or forward+backward")
-    parser.add_argument("--steps", type=int, default=10,
-                       help="Number of steps to measure. Default: 10")
-    parser.add_argument("--warmup", type=int, nargs='+', default=[5],
-                       help="Number of warmup steps. Default: 5")
     parser.add_argument("--sizes", type=str, nargs='+', choices=list(MODEL_CONFIGS.keys()), default=["s"],
                        help=f"Model sizes to run benchmarking sweep on. Choices: {list(MODEL_CONFIGS.keys())}. Default: s")
     parser.add_argument("--contexts", type=int, nargs='+', default=[256], 
                        help="Context lengths to run benchmarking sweep on. Default: 256")
+    parser.add_argument("--warmup", type=int, nargs='+', default=[5],
+                       help="Number of warmup steps. Default: 5")
+    parser.add_argument("--steps", type=int, default=10,
+                       help="Number of steps to measure for each benchmarking job. Default: 10")
+    parser.add_argument("--mode", type=str, choices=["f", "b", "f_b"], default="f_b", 
+                       help="Whether to benchmark forward only, backward only, or forward+backward")
     
     return parser.parse_args()
 
@@ -216,7 +216,7 @@ def run_benchmarking_experiment(
             )
 
             for warmup in warmup_steps:
-                print(f"Running benchmarking with {warmup} warmup steps:")
+                print(f"\n{warmup} WARMUP STEPS")
                 torch.cuda.empty_cache()
                 benchmark_results = run_benchmarking(
                     size=size,
