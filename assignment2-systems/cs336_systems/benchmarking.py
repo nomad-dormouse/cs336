@@ -14,7 +14,7 @@ from cs336_basics.model import BasicsTransformerLM
 from cs336_basics.nn_utils import cross_entropy
 
 # Import adamw_accounting from assignment1-basics
-sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "assignment1-basics"))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / "assignment1-basics"))
 from cs336_basics.optimiser import adamw_accounting
 
 
@@ -184,6 +184,8 @@ def run_benchmarking_experiment(
     mode: str = "f_b",
     sizes: list[str] = ["s"],
     contexts: list[int] = [256],
+    vocab_size: int = 10000,
+    batch_size: int = 4,
 ) -> None:
     results_dir = Path("./results")
     results_dir.mkdir(parents=True, exist_ok=True)
@@ -197,27 +199,29 @@ def run_benchmarking_experiment(
     results = []
     job_num = 0
     for size in sizes:
+        d_model, d_ff, num_layers, num_heads = MODEL_CONFIGS[size]
         for context in contexts:
             torch.cuda.empty_cache()
             job_num += 1
-            d_model, d_ff, num_layers, num_heads = MODEL_CONFIGS[size]
+
             adamw_accounting(
                 model_name=size,
-                batch_size=4,
-                vocab_size=10000,
+                batch_size=batch_size,
+                vocab_size=vocab_size,
                 context_length=context,
                 num_layers=num_layers,
                 d_model=d_model,
                 num_heads=num_heads,
             )
+
             print(f"\n[{job_num}/{total_jobs}] Running benchmarking for size={size} and context={context}...")
             benchmark_results = run_benchmarking(
                 size=size,
                 context=context,
                 steps=steps,
                 warmup_steps=warmup_steps,
-                vocab_size=10000,
-                batch_size=4,
+                vocab_size=vocab_size,
+                batch_size=batch_size,
                 d_model=d_model,
                 num_layers=num_layers,
                 num_heads=num_heads,
@@ -244,4 +248,6 @@ if __name__ == "__main__":
         mode=args.mode,
         sizes=args.sizes,
         contexts=args.contexts,
+        vocab_size=10000,
+        batch_size=4,
     )
