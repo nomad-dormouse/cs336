@@ -5,7 +5,6 @@ from tqdm import tqdm
 
 import numpy as np
 import pandas as pd
-import submitit
 import torch
 import torch.nn as nn
 
@@ -173,36 +172,22 @@ def run_benchmarking_experiment(
 ) -> None:
     results_dir = Path("./results")
     results_dir.mkdir(parents=True, exist_ok=True)
-    logs_dir = Path("./results/logs")
-    logs_dir.mkdir(parents=True, exist_ok=True)
     filename = f"sizes_{'_'.join(sizes)}_contexts_{'_'.join(str(c) for c in contexts)}"
     csv_file = results_dir / f"benchmarking_{filename}.csv"
 
-    executor = submitit.AutoExecutor(folder=logs_dir)
-    executor.update_parameters(
-        nodes=1,
-        gpus_per_node=1,
-        name=f"logs_{filename}",
-    )
-
-    jobs = []
+    total_jobs = len(sizes) * len(contexts)
+    print(f"Running {total_jobs} benchmarking jobs sequentially on single GPU...")
+    
+    # Run jobs sequentially on single GPU
+    results = []
+    job_num = 0
     for size in sizes:
         for context in contexts:
-            def job_fn(s=size, c=context):
-                torch.cuda.empty_cache()
-                print(f"Running benchmarking for size={s} and context={c}...")
-                benchmark_results = run_benchmarking(s, c, steps, warmup_steps, mode=mode)
-                return benchmark_results
-            
-            jobs.append(executor.submit(job_fn))
-
-    print(f"Submitted {len(jobs)} jobs: {[j.job_id for j in jobs]}")
-    print(f"Monitor with: squeue -u $USER")
-    print(f"Logs in: {logs_dir}")
-    print(f"Waiting for jobs to complete...")
-    
-    # Wait for all jobs to complete and collect results
-    results = [job.result() for job in jobs]
+            torch.cuda.empty_cache()
+            job_num += 1
+            print(f"[{job_num}/{total_jobs}] Running benchmarking for size={size} and context={context}...")
+            benchmark_results = run_benchmarking(size, context, steps, warmup_steps, mode=mode)
+            results.append(benchmark_results)
     
     # Combine results into DataFrame
     df = pd.DataFrame(results)
