@@ -9,6 +9,7 @@
 
 
 from dotenv import load_dotenv, find_dotenv
+from pathlib import Path
 import torch
 from torch import Tensor, nn, optim
 from jaxtyping import Float, Int
@@ -311,7 +312,9 @@ def adamw_accounting(
         }
     }
     
-    filename = f"results/accounting/AdamW_{model_name}_batch_{batch_size}.json"
+    results_dir = Path("results/accounting")
+    results_dir.mkdir(parents=True, exist_ok=True)
+    filename = results_dir / f"AdamW_{model_name}_batch_{batch_size}.json"
     with open(filename, "w") as f:
         json.dump(results, f)
 
