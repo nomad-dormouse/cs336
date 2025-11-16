@@ -86,18 +86,21 @@ def benchmark(
 
     if mode == 'f' or mode == 'f_b':
         forward_times = np.array(times_forward)
-        benchmark_results["avg_time_forward_ms"] = forward_times.mean() * 1000
-        benchmark_results["std_time_forward_ms"] = forward_times.std() * 1000
+        avg = forward_times.mean() * 1000
+        std = forward_times.std() * 1000
+        benchmark_results["forward_ms"] = f"{avg:.2f} ± {std:.2f}"
 
     if mode == 'b' or mode == 'f_b':
         backward_times = np.array(times_backward)
-        benchmark_results["avg_time_backward_ms"] = backward_times.mean() * 1000
-        benchmark_results["std_time_backward_ms"] = backward_times.std() * 1000
+        avg = backward_times.mean() * 1000
+        std = backward_times.std() * 1000
+        benchmark_results["backward_ms"] = f"{avg:.2f} ± {std:.2f}"
         
     if mode == 'f_b':
         forward_and_backward_times = np.array(times_forward_and_backward)
-        benchmark_results["avg_time_forward_and_backward_ms"] = forward_and_backward_times.mean() * 1000
-        benchmark_results["std_time_forward_and_backward_ms"] = forward_and_backward_times.std() * 1000
+        avg = forward_and_backward_times.mean() * 1000
+        std = forward_and_backward_times.std() * 1000
+        benchmark_results["forward_and_backward_ms"] = f"{avg:.2f} ± {std:.2f}"
 
     return benchmark_results
 
@@ -190,7 +193,8 @@ def run_benchmarking_experiment(
             results.append(benchmark_results)
     
     # Combine results into DataFrame
-    df = pd.DataFrame(results)
+    cols = ["size", "context", "warmup_steps", "steps", "mode", "forward_and_backward_ms", "forward_ms", "backward_ms"]
+    df = pd.DataFrame(results)[cols]
     
     # Save to CSV
     df.to_csv(csv_file, index=False)
