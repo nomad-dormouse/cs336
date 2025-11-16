@@ -193,7 +193,7 @@ def run_benchmarking_experiment(
 ) -> None:
     benchmarking_dir = Path("./results/benchmarking")
     benchmarking_dir.mkdir(parents=True, exist_ok=True)
-    filename = f"warmup_{warmup_steps}_steps_{steps}_mode_{mode}_sizes_{'_'.join(sizes)}_contexts_{'_'.join(str(c) for c in contexts)}"
+    filename = f"sizes_{'_'.join(sizes)}_contexts_{'_'.join(str(c) for c in contexts)}_warmup_{"_".join(str(w) for w in warmup_steps)}"
     csv_file = benchmarking_dir / f"{filename}.csv"
 
     total_jobs = len(sizes) * len(contexts)
