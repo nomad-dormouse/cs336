@@ -60,13 +60,14 @@ def benchmark(
     times_forward_and_backward = []
 
     # Warm-up steps
-    for _ in tqdm(range(warmup_steps), desc="Warm-up steps"):
-        output = model(input)
-        if mode == 'f_b':
-            loss = cross_entropy(output, target)
-            loss.backward()
-            model.zero_grad()
-        torch.cuda.synchronize()
+    if warmup_steps > 0:
+        for _ in tqdm(range(warmup_steps), desc="Warm-up steps"):
+            output = model(input)
+            if mode == 'f_b':
+                loss = cross_entropy(output, target)
+                loss.backward()
+                model.zero_grad()
+            torch.cuda.synchronize()
 
     # Actual benchmarking
     for _ in tqdm(range(steps), desc="Benchmarking steps"):
@@ -200,29 +201,28 @@ def run_benchmarking_experiment(
     # Run jobs sequentially on single GPU
     results = []
     job_num = 0
-    for steps in warmup_steps:
-        for size in sizes:
-            d_model, d_ff, num_layers, num_heads = MODEL_CONFIGS[size]
-            for context in contexts:
-                job_num += 1
-                torch.cuda.empty_cache()
-                print(f"\n[{job_num}/{total_jobs}] Calculating optimiser accounting and running benchmarking for size={size}...\n")
-                
-                adamw_accounting(
-                    model_name=size,
-                    batch_size=batch_size,
-                    vocab_size=vocab_size,
-                    context_length=context,
-                    num_layers=num_layers,
-                    d_model=d_model,
-                    num_heads=num_heads,
-                )
+    for size in sizes:
+        d_model, d_ff, num_layers, num_heads = MODEL_CONFIGS[size]
+        for context in contexts:
+            print(f"\n\nOptimiser accounting for SIZE={size}, CONTEXT={context}:")
+            adamw_accounting(
+                model_name=size,
+                batch_size=batch_size,
+                vocab_size=vocab_size,
+                context_length=context,
+                num_layers=num_layers,
+                d_model=d_model,
+                num_heads=num_heads,
+            )
 
+            for warmup in warmup_steps:
+                print(f"Running benchmarking with {warmup} warmup steps:")
+                torch.cuda.empty_cache()
                 benchmark_results = run_benchmarking(
                     size=size,
                     context=context,
                     steps=steps,
-                    warmup_steps=steps,
+                    warmup_steps=warmup,
                     vocab_size=vocab_size,
                     batch_size=batch_size,
                     d_model=d_model,
